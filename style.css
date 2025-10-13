@@ -1,0 +1,14 @@
+body{
+     font-family: "Museo", sans-serif;
+     text-align: center;
+        color: beige;
+}
+content{
+    position:relative;
+}
+input{
+    font-size: large;
+    text-align: center;
+    border: 1px, solid, greenyellow;
+    border-radius: 10px;
+}
