@@ -2,7 +2,39 @@
 const SUPABASE_URL = 'https://ubkzwrgkccxvyaiagudg.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVia3p3cmdrY2N4dnlhaWFndWRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzMjUxNTYsImV4cCI6MjA3NTkwMTE1Nn0.22DTU-GTxzPEHmpbXkzoUda87S36Hi8QFu_GrG-Zx0Y';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Poczekaj aż strona się załaduje
+document.addEventListener('DOMContentLoaded', function() {
+    initializeApp();
+});
+
+function initializeApp() {
+    // Sprawdź czy Supabase jest dostępny
+    if (typeof window.supabase !== 'undefined') {
+        initSupabase();
+    } else {
+        // Poczekaj aż Supabase się załaduje
+        setTimeout(initSupabase, 100);
+    }
+}
+
+function initSupabase() {
+    try {
+        // Inicjalizuj Supabase
+        window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        console.log('Supabase zainicjalizowany');
+        
+        // Sprawdź czy użytkownik jest zalogowany
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) {
+            showApp(JSON.parse(savedUser));
+        } else {
+            showLogin();
+        }
+    } catch (error) {
+        console.error('Błąd inicjalizacji Supabase:', error);
+        alert('Błąd połączenia z bazą danych. Spróbuj odświeżyć stronę.');
+    }
+}
 
 // Pokaz formularz logowania
 function showLogin() {
@@ -35,7 +67,13 @@ async function register() {
     }
 
     try {
-        const { data, error } = await supabase
+        // Sprawdź czy Supabase jest gotowy
+        if (!window.supabaseClient) {
+            alert('Błąd połączenia. Spróbuj ponownie.');
+            return;
+        }
+
+        const { data, error } = await window.supabaseClient
             .from('uzytkownicy')
             .insert([{ 
                 email: email, 
@@ -66,7 +104,13 @@ async function login() {
     }
 
     try {
-        const { data, error } = await supabase
+        // Sprawdź czy Supabase jest gotowy
+        if (!window.supabaseClient) {
+            alert('Błąd połączenia. Spróbuj ponownie.');
+            return;
+        }
+
+        const { data, error } = await window.supabaseClient
             .from('uzytkownicy')
             .select('*')
             .eq('email', email)
@@ -96,28 +140,32 @@ async function showApp(user) {
     document.getElementById('register-form').classList.remove('active');
     document.getElementById('app-section').classList.add('active');
 
-    // Pobierz listy z bazy
-    const { data: listy, error } = await supabase
-        .from('listy')
-        .select('*')
-        .order('numer_listu');
+    try {
+        // Pobierz listy z bazy
+        const { data: listy, error } = await window.supabaseClient
+            .from('listy')
+            .select('*')
+            .order('numer_listu');
 
-    if (error) {
-        alert('Błąd ładowania list: ' + error.message);
-        return;
+        if (error) {
+            alert('Błąd ładowania list: ' + error.message);
+            return;
+        }
+
+        let html = '';
+
+        if (user.admin) {
+            // Widok administratora
+            html = showAdminView(user, listy);
+        } else {
+            // Widok użytkownika
+            html = showUserView(user, listy);
+        }
+
+        document.getElementById('app-content').innerHTML = html;
+    } catch (err) {
+        alert('Błąd ładowania aplikacji: ' + err.message);
     }
-
-    let html = '';
-
-    if (user.admin) {
-        // Widok administratora
-        html = showAdminView(user, listy);
-    } else {
-        // Widok użytkownika
-        html = showUserView(user, listy);
-    }
-
-    document.getElementById('app-content').innerHTML = html;
 }
 
 // Widok administratora
@@ -237,7 +285,7 @@ async function reserveList(numerListu) {
     const user = JSON.parse(localStorage.getItem('user'));
     
     try {
-        const { error } = await supabase
+        const { error } = await window.supabaseClient
             .from('listy')
             .update({ 
                 status: 'zarezerwowany', 
@@ -259,7 +307,7 @@ async function reserveList(numerListu) {
 // Anulowanie rezerwacji
 async function cancelReservation(numerListu) {
     try {
-        const { error } = await supabase
+        const { error } = await window.supabaseClient
             .from('listy')
             .update({ 
                 status: 'dostępny', 
@@ -278,33 +326,26 @@ async function cancelReservation(numerListu) {
     }
 }
 
-// Sprawdź czy użytkownik jest zalogowany przy ładowaniu strony
-document.addEventListener('DOMContentLoaded', function() {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-        showApp(JSON.parse(savedUser));
-    } else {
-        showLogin();
-    }
-});
-
 // Obsługa Enter w formularzach
 document.addEventListener('DOMContentLoaded', function() {
-    // Enter w login
-    document.getElementById('email')?.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') login();
-    });
-    
-    document.getElementById('password')?.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') login();
-    });
+    // Poczekaj chwilę aż wszystko się załaduje
+    setTimeout(() => {
+        // Enter w login
+        document.getElementById('email')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
+        });
+        
+        document.getElementById('password')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
+        });
 
-    // Enter w rejestracji
-    document.getElementById('register-email')?.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') register();
-    });
-    
-    document.getElementById('register-password')?.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') register();
-    });
+        // Enter w rejestracji
+        document.getElementById('register-email')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') register();
+        });
+        
+        document.getElementById('register-password')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') register();
+        });
+    }, 500);
 });
