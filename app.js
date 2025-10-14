@@ -100,10 +100,12 @@ function logout() {
 }
 
 // Pokazywanie formularza logowania
+// Pokazywanie formularza logowania
 function showLogin() {
-    document.getElementById('login-form').classList.add('active');
-    document.getElementById('register-form').classList.remove('active');
-    document.getElementById('app-section').classList.remove('active');
+    console.log('showLogin called'); // Debug
+    document.getElementById('login-form').style.display = 'block';
+    document.getElementById('register-form').style.display = 'none';
+    document.getElementById('app-section').style.display = 'none';
     
     // Wyczyść formularze
     document.getElementById('email').value = '';
@@ -114,9 +116,10 @@ function showLogin() {
 
 // Pokazywanie formularza rejestracji
 function showRegister() {
-    document.getElementById('login-form').classList.remove('active');
-    document.getElementById('register-form').classList.add('active');
-    document.getElementById('app-section').classList.remove('active');
+    console.log('showRegister called'); // Debug
+    document.getElementById('login-form').style.display = 'none';
+    document.getElementById('register-form').style.display = 'block';
+    document.getElementById('app-section').style.display = 'none';
 }
 
 // Pokazywanie głównej aplikacji
