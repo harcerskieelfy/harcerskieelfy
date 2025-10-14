@@ -3,74 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Harcerskie Elfy - System Listów</title>
+    <title>Harcerskie Elfy</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="icon" href="logo.jpg">
-    <style>
-        /* TYMCZASOWY FIX */
-        #register-form { display: none; }
-        #app-section { display: none; }
-    </style>
-    <script src="app.js"></script>
 </head>
 <body>
-    <content>
-        <!-- Nagłówek -->
+    <div class="container">
         <div class="header">
-            <img src="logo.jpg" width="120" height="120" alt="Harcerskie Elfy">
-            <h1>Harcerskie Elfy</h1>
-            <p>System rezerwacji listów świątecznych</p>
+            <h1>🎅 Harcerskie Elfy</h1>
+            <p>System rezerwacji listów</p>
         </div>
 
-        <!-- Formularz logowania -->
-        <div id="login-form" class="form-section">
-            <div class="form-container">
-                <h2>Zaloguj się</h2>
-                <p>Aby uzyskać dostęp do systemu listów</p>
-                
-                <input type="email" placeholder="Podaj email" id="email" class="input-field" required>
-                <input type="password" placeholder="Podaj hasło" id="password" class="input-field" required>
-                
-                <button onclick="login()" class="btn btn-primary">Zaloguj się</button>
-                
-                <p style="margin-top: 20px;">
-                    Nie masz konta? <a class="link" onclick="showRegister()">Zarejestruj się</a>
-                </p>
-            </div>
+        <!-- Logowanie -->
+        <div id="login-form" class="form-section active">
+            <h2>Zaloguj się</h2>
+            <input type="email" id="email" placeholder="Email" class="input">
+            <input type="password" id="password" placeholder="Hasło" class="input">
+            <button onclick="login()" class="btn">Zaloguj się</button>
+            <p>Nie masz konta? <a href="#" onclick="showRegister()">Zarejestruj się</a></p>
         </div>
 
-        <!-- Formularz rejestracji -->
+        <!-- Rejestracja -->
         <div id="register-form" class="form-section">
-            <div class="form-container">
-                <h2>Zarejestruj się</h2>
-                <p>Utwórz nowe konto w systemie</p>
-                
-                <input type="email" placeholder="Podaj email" id="register-email" class="input-field" required>
-                <input type="password" placeholder="Utwórz hasło" id="register-password" class="input-field" required>
-                
-                <button onclick="register()" class="btn btn-primary">Zarejestruj się</button>
-                
-                <p style="margin-top: 20px;">
-                    Masz już konto? <a class="link" onclick="showLogin()">Zaloguj się</a>
-                </p>
-            </div>
+            <h2>Zarejestruj się</h2>
+            <input type="email" id="register-email" placeholder="Email" class="input">
+            <input type="password" id="register-password" placeholder="Hasło" class="input">
+            <button onclick="register()" class="btn">Zarejestruj się</button>
+            <p>Masz już konto? <a href="#" onclick="showLogin()">Zaloguj się</a></p>
         </div>
 
-        <!-- Główna aplikacja -->
-        <div id="app-section" class="section">
-            <!-- Zawartość wczyta się dynamicznie przez JavaScript -->
+        <!-- Aplikacja -->
+        <div id="app-section" class="form-section">
+            <div id="app-content"></div>
         </div>
-    </content>
+    </div>
 
     <script src="app.js"></script>
-    <script>
-        // WYMUSZENIE POKAZANIA LOGOWANIA NA STARCIE
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('login-form').style.display = 'block';
-            document.getElementById('register-form').style.display = 'none';
-            document.getElementById('app-section').style.display = 'none';
-        });
-    </script>
 </body>
 </html>
