@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="icon" href="logo.jpg">
+    <style>
+        /* TYMCZASOWY FIX */
+        #register-form { display: none; }
+        #app-section { display: none; }
+    </style>
 </head>
 <body>
     <content>
@@ -18,7 +23,7 @@
         </div>
 
         <!-- Formularz logowania -->
-        <div id="login-form" class="form-section active">
+        <div id="login-form" class="form-section">
             <div class="form-container">
                 <h2>Zaloguj się</h2>
                 <p>Aby uzyskać dostęp do systemu listów</p>
@@ -58,5 +63,13 @@
     </content>
 
     <script src="app.js"></script>
+    <script>
+        // WYMUSZENIE POKAZANIA LOGOWANIA NA STARCIE
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('login-form').style.display = 'block';
+            document.getElementById('register-form').style.display = 'none';
+            document.getElementById('app-section').style.display = 'none';
+        });
+    </script>
 </body>
 </html>
