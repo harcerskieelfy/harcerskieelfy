@@ -465,3 +465,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.key === 'Enter') register();
     });
 });
+
+// TEST: Ręczne wywołanie showAppSection
+function testAppSection() {
+    const testUser = {
+        id: 1,
+        mail: 'test@example.com',
+        admin: false
+    };
+    showAppSection(testUser);
+}
+
+// Odkomentuj na chwilę żeby przetestować:
+testAppSection();
