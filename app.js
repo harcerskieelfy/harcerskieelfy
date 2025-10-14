@@ -19,6 +19,7 @@ async function checkAuth() {
 }
 
 // Logowanie
+// Logowanie - POPRAWIONA WERSJA
 async function login() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
@@ -29,6 +30,8 @@ async function login() {
     }
 
     try {
+        console.log('Logowanie:', email); // Debug
+        
         const { data, error } = await supabase
             .from('uzytkownicy')
             .select('*')
@@ -36,13 +39,20 @@ async function login() {
             .eq('haslo', password)
             .single();
 
-        if (error || !data) {
+        console.log('Odpowiedź Supabase:', data, error); // Debug
+
+        if (error) {
+            console.error('Błąd Supabase:', error);
+            alert('Błąd połączenia z bazą: ' + error.message);
+        } else if (!data) {
             alert('Błędny email lub hasło!');
         } else {
+            console.log('Logowanie udane:', data);
             localStorage.setItem('user', JSON.stringify(data));
             showAppSection(data);
         }
     } catch (err) {
+        console.error('Błąd logowania:', err);
         alert('Błąd logowania: ' + err.message);
     }
 }
