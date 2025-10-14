@@ -20,6 +20,7 @@ async function checkAuth() {
 
 // Logowanie
 // Logowanie - POPRAWIONA WERSJA
+// Logowanie - UPROSZCZONE
 async function login() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
@@ -29,34 +30,29 @@ async function login() {
         return;
     }
 
-    try {
-        console.log('Logowanie:', email); // Debug
-        
-        const { data, error } = await supabase
-            .from('uzytkownicy')
-            .select('*')
-            .eq('mail', email)
-            .eq('haslo', password)
-            .single();
+    // TYMCZASOWE ROZWIĄZANIE - sprawdź w konsoli
+    console.log('Próba logowania:', email, password);
+    
+    // Sprawdź bezpośrednio w tabeli
+    const { data, error } = await supabase
+        .from('uzytkownicy')
+        .select('*')
+        .eq('mail', email)
+        .eq('haslo', password);
 
-        console.log('Odpowiedź Supabase:', data, error); // Debug
+    console.log('Wynik zapytania:', data, error);
 
-        if (error) {
-            console.error('Błąd Supabase:', error);
-            alert('Błąd połączenia z bazą: ' + error.message);
-        } else if (!data) {
-            alert('Błędny email lub hasło!');
-        } else {
-            console.log('Logowanie udane:', data);
-            localStorage.setItem('user', JSON.stringify(data));
-            showAppSection(data);
-        }
-    } catch (err) {
-        console.error('Błąd logowania:', err);
-        alert('Błąd logowania: ' + err.message);
+    if (error) {
+        alert('Błąd bazy danych: ' + error.message);
+    } else if (!data || data.length === 0) {
+        alert('Błędny email lub hasło!');
+    } else {
+        const user = data[0];
+        localStorage.setItem('user', JSON.stringify(user));
+        showAppSection(user);
+        alert('Logowanie udane! Witaj ' + user.mail);
     }
 }
-
 // Rejestracja
 async function register() {
     const email = document.getElementById('register-email').value;
