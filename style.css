@@ -47,10 +47,24 @@ content {
     opacity: 0.9;
 }
 
-/* Formularze */
+/* FORMULARZE - WAŻNE: DODAJ TE REGUŁY */
 .form-section {
+    display: none;
     padding: 40px;
     text-align: center;
+}
+
+.form-section.active {
+    display: block;
+}
+
+.section {
+    display: none;
+    padding: 30px;
+}
+
+.section.active {
+    display: block;
 }
 
 .form-container {
@@ -159,16 +173,6 @@ content {
 
 .link:hover {
     text-decoration: underline;
-}
-
-/* Sekcje aplikacji */
-.section {
-    display: none;
-    padding: 30px;
-}
-
-.section.active {
-    display: block;
 }
 
 /* Widok admina */
@@ -428,14 +432,10 @@ content {
         padding: 20px;
     }
     
-  .section {
-    display: none;
-    padding: 30px;
-}
-
-.section.active {
-    display: block;
-}
+    .section {
+        padding: 20px;
+    }
+    
     .admin-header,
     .user-header {
         flex-direction: column;
