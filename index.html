@@ -3,144 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Harcerskie Elfy - Logowanie</title>
+    <title>Harcerskie Elfy - System Listów</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Dodaj Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="icon" href="logo.jpg">
 </head>
 <body>
-   <content>
-    <img src="logo.jpg" width="150" height="150">
-    <h1 style="color: green;">Harcerskie Elfy</h1>
-    
-    <!-- Formularz logowania -->
-    <div id="login-form">
-        <form id="loginForm">
-            <input type="email" placeholder="Podaj email" id="email" required><br><br>
-            <input type="password" placeholder="Podaj hasło" id="password" required><br><br>
-            <button type="button" onclick="login()">Zaloguj się</button>
-        </form>
-        <p>Nie masz konta? <a href="#" onclick="showRegister()">Zarejestruj się</a></p>
-    </div>
-
-    <!-- Formularz rejestracji (na razie ukryty) -->
-    <div id="register-form" style="display: none;">
-        <form id="registerForm">
-            <input type="email" placeholder="Podaj email" id="register-email" required><br><br>
-            <input type="password" placeholder="Utwórz hasło" id="register-password" required><br><br>
-            <button type="button" onclick="register()">Zarejestruj się</button>
-        </form>
-        <p>Masz już konto? <a href="#" onclick="showLogin()">Zaloguj się</a></p>
-    </div>
-
-    <!-- Sekcja po zalogowaniu -->
-    <div id="app-section" style="display: none;">
-        <h2>Witaj, <span id="user-email"></span>!</h2>
-        <button onclick="logout()">Wyloguj</button>
-        
-        <!-- Tutaj później dodasz organizer zadań -->
-        <div id="organizer-preview">
-            <h3>Organizer Zadań - Wkrótce!</h3>
-            <p>Tu będzie lista zadań dla Twojej drużyny</p>
+    <content>
+        <!-- Nagłówek -->
+        <div class="header">
+            <img src="logo.jpg" width="120" height="120" alt="Harcerskie Elfy">
+            <h1>Harcerskie Elfy</h1>
+            <p>System rezerwacji listów świątecznych</p>
         </div>
-    </div>
 
-   </content>
+        <!-- Formularz logowania -->
+        <div id="login-form" class="form-section active">
+            <div class="form-container">
+                <h2>Zaloguj się</h2>
+                <p>Aby uzyskać dostęp do systemu listów</p>
+                
+                <input type="email" placeholder="Podaj email" id="email" class="input-field" required>
+                <input type="password" placeholder="Podaj hasło" id="password" class="input-field" required>
+                
+                <button onclick="login()" class="btn btn-primary">Zaloguj się</button>
+                
+                <p style="margin-top: 20px;">
+                    Nie masz konta? <a class="link" onclick="showRegister()">Zarejestruj się</a>
+                </p>
+            </div>
+        </div>
 
-   <script>
-    // Konfiguracja Supabase - ZMIENIĆ NA SWOJE DANE!
-    const SUPABASE_URL = 'https://ubkzwrgkccxvyaiagudg.supabase.co'; // Twój URL z Supabase
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVia3p3cmdrY2N4dnlhaWFndWRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzMjUxNTYsImV4cCI6MjA3NTkwMTE1Nn0.22DTU-GTxzPEHmpbXkzoUda87S36Hi8QFu_GrG-Zx0Y'; // Twój klucz anonimowy
+        <!-- Formularz rejestracji -->
+        <div id="register-form" class="form-section">
+            <div class="form-container">
+                <h2>Zarejestruj się</h2>
+                <p>Utwórz nowe konto w systemie</p>
+                
+                <input type="email" placeholder="Podaj email" id="register-email" class="input-field" required>
+                <input type="password" placeholder="Utwórz hasło" id="register-password" class="input-field" required>
+                
+                <button onclick="register()" class="btn btn-primary">Zarejestruj się</button>
+                
+                <p style="margin-top: 20px;">
+                    Masz już konto? <a class="link" onclick="showLogin()">Zaloguj się</a>
+                </p>
+            </div>
+        </div>
 
-    // Utwórz klienta Supabase
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        <!-- Główna aplikacja -->
+        <div id="app-section" class="section">
+            <!-- Zawartość wczyta się dynamicznie przez JavaScript -->
+        </div>
+    </content>
 
-    // Sprawdź czy użytkownik jest już zalogowany przy ładowaniu strony
-    async function checkAuth() {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            showAppSection(user.email);
-        }
-    }
-
-    // Rejestracja
-    async function register() {
-        const email = document.getElementById('register-email').value;
-        const password = document.getElementById('register-password').value;
-
-        if (!email || !password) {
-            alert('Proszę wypełnić wszystkie pola!');
-            return;
-        }
-
-        const { data, error } = await supabase.auth.signUp({
-            email: email,
-            password: password,
-        });
-
-        if (error) {
-            alert('Błąd rejestracji: ' + error.message);
-        } else {
-            alert('Rejestracja udana! Sprawdź email aby potwierdzić konto.');
-            showLogin();
-        }
-    }
-
-    // Logowanie
-    async function login() {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-
-        if (!email || !password) {
-            alert('Proszę wypełnić wszystkie pola!');
-            return;
-        }
-
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: password,
-        });
-
-        if (error) {
-            alert('Błąd logowania: ' + error.message);
-        } else {
-            showAppSection(data.user.email);
-        }
-    }
-
-    // Wylogowanie
-    async function logout() {
-        await supabase.auth.signOut();
-        showLogin();
-    }
-
-    // Pokazywanie formularza logowania
-    function showLogin() {
-        document.getElementById('login-form').style.display = 'block';
-        document.getElementById('register-form').style.display = 'none';
-        document.getElementById('app-section').style.display = 'none';
-    }
-
-    // Pokazywanie formularza rejestracji
-    function showRegister() {
-        document.getElementById('login-form').style.display = 'none';
-        document.getElementById('register-form').style.display = 'block';
-        document.getElementById('app-section').style.display = 'none';
-    }
-
-    // Pokazywanie aplikacji po zalogowaniu
-    function showAppSection(email) {
-        document.getElementById('login-form').style.display = 'none';
-        document.getElementById('register-form').style.display = 'none';
-        document.getElementById('app-section').style.display = 'block';
-        document.getElementById('user-email').textContent = email;
-    }
-
-    // Sprawdź autoryzację przy ładowaniu strony
-    document.addEventListener('DOMContentLoaded', function() {
-        checkAuth();
-    });
-   </script>
+    <script src="app.js"></script>
 </body>
 </html>

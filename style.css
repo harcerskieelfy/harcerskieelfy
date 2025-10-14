@@ -1,14 +1,473 @@
-body{
-     font-family: "Museo", sans-serif;
-     text-align: center;
-        color: beige;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
-content{
-    position:relative;
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: #333;
 }
-input{
-    font-size: large;
+
+content {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    overflow: hidden;
+}
+
+/* Nagłówek */
+.header {
+    background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);
+    color: white;
+    padding: 30px;
     text-align: center;
-    border: 1px, solid, greenyellow;
+    position: relative;
+}
+
+.header img {
+    border-radius: 50%;
+    border: 5px solid white;
+    margin-bottom: 15px;
+}
+
+.header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.header p {
+    font-size: 1.2em;
+    opacity: 0.9;
+}
+
+/* Formularze */
+.form-section {
+    padding: 40px;
+    text-align: center;
+}
+
+.form-container {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.form-container h2 {
+    color: #1b5e20;
+    margin-bottom: 10px;
+    font-size: 2em;
+}
+
+.form-container p {
+    color: #666;
+    margin-bottom: 30px;
+}
+
+.input-field {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #ddd;
     border-radius: 10px;
+    font-size: 16px;
+    margin: 10px 0;
+    transition: all 0.3s;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: #4caf50;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+}
+
+/* Przyciski */
+.btn {
+    padding: 15px 25px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin: 5px;
+    font-weight: 600;
+}
+
+.btn-primary {
+    background: #4caf50;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #45a049;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.btn-secondary {
+    background: #757575;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #616161;
+}
+
+.btn-success {
+    background: #388e3c;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #2e7d32;
+}
+
+.btn-danger {
+    background: #d32f2f;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c62828;
+}
+
+.btn-info {
+    background: #0288d1;
+    color: white;
+}
+
+.btn-info:hover {
+    background: #0277bd;
+}
+
+.btn-small {
+    padding: 8px 15px;
+    font-size: 14px;
+}
+
+/* Linki */
+.link {
+    color: #4caf50;
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.link:hover {
+    text-decoration: underline;
+}
+
+/* Sekcje aplikacji */
+.section {
+    display: none;
+    padding: 30px;
+}
+
+.section.active {
+    display: block;
+}
+
+/* Widok admina */
+.admin-view {
+    background: #f8f9fa;
+    min-height: 400px;
+}
+
+.admin-header {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.admin-actions {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin: 20px 0;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.admin-actions h3 {
+    color: #1b5e20;
+    margin-bottom: 15px;
+}
+
+.admin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.stat-number {
+    font-size: 2em;
+    font-weight: bold;
+    color: #1b5e20;
+    display: block;
+}
+
+.stat-label {
+    color: #666;
+    font-size: 0.9em;
+}
+
+/* Widok użytkownika */
+.user-view {
+    background: #f8f9fa;
+    min-height: 400px;
+}
+
+.user-header {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+    .user-sections {
+        grid-template-columns: 1fr;
+    }
+}
+
+.user-section {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.user-section h3 {
+    color: #1b5e20;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e8f5e8;
+}
+
+/* Karty listów */
+.lists-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.list-card {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 15px;
+    padding: 20px;
+    transition: all 0.3s;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.list-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.list-card.available {
+    border-left: 5px solid #4caf50;
+}
+
+.list-card.reserved {
+    border-left: 5px solid #ff9800;
+}
+
+.list-card.dostępny {
+    border-left: 5px solid #4caf50;
+}
+
+.list-card.zarezerwowany {
+    border-left: 5px solid #ff9800;
+}
+
+.list-card.wysłany {
+    border-left: 5px solid #2196f3;
+}
+
+.list-card.dostarczony {
+    border-left: 5px solid #9c27b0;
+}
+
+.list-card h4 {
+    color: #1b5e20;
+    margin-bottom: 10px;
+    font-size: 1.3em;
+}
+
+.list-card p {
+    margin: 8px 0;
+    line-height: 1.4;
+}
+
+.list-card strong {
+    color: #555;
+}
+
+.list-actions {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Statusy */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-left: 10px;
+}
+
+.status-dostępny {
+    background: #e8f5e8;
+    color: #2e7d32;
+}
+
+.status-zarezerwowany {
+    background: #fff3e0;
+    color: #ef6c00;
+}
+
+.status-wysłany {
+    background: #e3f2fd;
+    color: #1565c0;
+}
+
+.status-dostarczony {
+    background: #f3e5f5;
+    color: #7b1fa2;
+}
+
+/* Informacje */
+.user-info {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border-left: 5px solid #4caf50;
+}
+
+.admin-info {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border-left: 5px solid #2196f3;
+}
+
+/* Formularz dodawania listu */
+.add-list-form {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    margin: 20px 0;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+}
+
+/* Responsywność */
+@media (max-width: 768px) {
+    content {
+        margin: 10px;
+        border-radius: 15px;
+    }
+    
+    .header {
+        padding: 20px;
+    }
+    
+    .header h1 {
+        font-size: 2em;
+    }
+    
+    .form-section {
+        padding: 20px;
+    }
+    
+    .section {
+        padding: 20px;
+    }
+    
+    .admin-header,
+    .user-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .lists-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Animacje */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Ładowanie */
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.loading::after {
+    content: '...';
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0%, 33% { content: '.'; }
+    34%, 66% { content: '..'; }
+    67%, 100% { content: '...'; }
 }
