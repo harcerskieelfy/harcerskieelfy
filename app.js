@@ -129,10 +129,19 @@ function showRegister() {
 }
 
 // Pokazywanie głównej aplikacji
+// Pokazywanie głównej aplikacji - POPRAWIONA
 function showAppSection(userData) {
-    document.getElementById('login-form').classList.remove('active');
-    document.getElementById('register-form').classList.remove('active');
-    document.getElementById('app-section').classList.add('active');
+    console.log('showAppSection called with:', userData); // Debug
+    
+    // UKRYJ formularze
+    document.getElementById('login-form').style.display = 'none';
+    document.getElementById('register-form').display = 'none';
+    
+    // POKAŻ aplikację
+    const appSection = document.getElementById('app-section');
+    appSection.style.display = 'block';
+    
+    console.log('App section display:', appSection.style.display); // Debug
     
     if (userData.admin) {
         showAdminView(userData);
