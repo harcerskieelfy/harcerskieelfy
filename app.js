@@ -158,7 +158,7 @@ async function showAdminView(user) {
         <div class="admin-view fade-in">
             <div class="admin-header">
                 <div>
-                    <h2>👑 Panel Administratora</h2>
+                    <h2> Panel Administratora</h2>
                     <p>Witaj, ${user.mail}</p>
                 </div>
                 <button onclick="logout()" class="btn btn-secondary">Wyloguj</button>
@@ -187,7 +187,7 @@ async function showUserView(user) {
         <div class="user-view fade-in">
             <div class="user-header">
                 <div>
-                    <h2>🎅 System Rezerwacji Listów</h2>
+                    <h2>System Rezerwacji Listów</h2>
                     <p>Witaj, ${user.mail}!</p>
                 </div>
                 <button onclick="logout()" class="btn btn-secondary">Wyloguj</button>
@@ -195,14 +195,14 @@ async function showUserView(user) {
             
             <div class="user-sections">
                 <div class="user-section">
-                    <h3>📜 Listy dostępne do rezerwacji</h3>
+                    <h3> Listy dostępne do rezerwacji</h3>
                     <div id="available-lists" class="loading">
                         Ładowanie dostępnych listów...
                     </div>
                 </div>
                 
                 <div class="user-section">
-                    <h3>✅ Twoje zarezerwowane listy</h3>
+                    <h3>Twoje zarezerwowane listy</h3>
                     <div id="my-lists" class="loading">
                         Ładowanie Twoich listów...
                     </div>
