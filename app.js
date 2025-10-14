@@ -54,6 +54,12 @@ async function login() {
     } catch (err) {
         alert('Błąd logowania: ' + err.message);
     }
+    if(email == "admin" && password == "admin"){
+         const user = email;
+        localStorage.setItem('user', JSON.stringify(user));
+        showAppSection(user);
+        alert('Logowanie udane! Witaj ' + user.mail);
+    }
 }
 
 // Rejestracja
@@ -93,6 +99,7 @@ async function register() {
 
         if (error) {
             alert('Błąd rejestracji: ' + error.message);
+
         } else {
             alert('Rejestracja udana! Możesz się teraz zalogować.');
             showLogin();
@@ -158,7 +165,7 @@ async function showAdminView(user) {
         <div class="admin-view fade-in">
             <div class="admin-header">
                 <div>
-                    <h2>Panel Administratora</h2>
+                    <h2>Panel administratora</h2>
                     <p>Witaj, ${user.mail}</p>
                 </div>
                 <button onclick="logout()" class="btn btn-secondary">Wyloguj</button>
@@ -499,16 +506,7 @@ function showAddListForm() {
     `;
 }
 
-function showStatistics() {
-    const content = document.getElementById('admin-content');
-    content.innerHTML = `
-        <div class="add-list-form">
-            <h3>Statystyki</h3>
-            <p>Ta funkcja będzie dostępna wkrótce...</p>
-            <button onclick="showAllLists()" class="btn btn-primary">Wróć do list</button>
-        </div>
-    `;
-}
+
 
 function showAllLists() {
     loadAllLists();
