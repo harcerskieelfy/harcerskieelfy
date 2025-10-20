@@ -266,7 +266,7 @@ async function loadAllLists() {
         console.error('Błąd ładowania list:', err);
         document.getElementById('admin-content').innerHTML = `
             <div class="error-message">
-                <h3>❌ Błąd ładowania list</h3>
+                <h3> Błąd ładowania list</h3>
                 <p>${err.message}</p>
                 <button onclick="createSampleLists()" class="btn btn-primary">Utwórz przykładowe listy</button>
             </div>
@@ -494,20 +494,6 @@ async function cancelReservation(listNumber) {
     }
 }
 
-// Funkcje dla admina
-function showAddListForm() {
-    const content = document.getElementById('admin-content');
-    content.innerHTML = `
-        <div class="add-list-form">
-            <h3>Dodaj nowy list</h3>
-            <p>Ta funkcja będzie dostępna wkrótce...</p>
-            <button onclick="showAllLists()" class="btn btn-primary">Wróć do list</button>
-        </div>
-    `;
-}
-
-
-
 function showAllLists() {
     loadAllLists();
 }
@@ -570,5 +556,107 @@ function checkLocalStorage() {
     console.log('LocalStorage user:', user);
     if (user) {
         console.log('Parsed user:', JSON.parse(user));
+    }
+}
+
+// Funkcja pokazująca formularz dodawania listu
+function showAddListForm() {
+    const content = document.getElementById('admin-content');
+    content.innerHTML = `
+        <div class="add-list-form fade-in">
+            <div class="form-header">
+                <h3>Dodaj nowy list</h3>
+                <button onclick="showAllLists()" class="btn btn-secondary">← Wróć do list</button>
+            </div>
+            
+            <form id="add-list-form" onsubmit="handleAddList(event)">
+                <div class="form-group">
+                    <label for="list-number">Numer listu *</label>
+                    <input type="text" id="list-number" class="input" required 
+                           placeholder="np. L001, L002">
+                </div>
+                
+                <div class="form-group">
+                    <label for="child-name">Dziecko (imię i wiek) *</label>
+                    <input type="text" id="child-name" class="input" required 
+                           placeholder="np. Ania, 5 lat">
+                </div>
+                
+                <div class="form-group">
+                    <label for="gift-description">Opis prezentu *</label>
+                    <textarea id="gift-description" class="input textarea" required 
+                              placeholder="Opisz czego dziecko potrzebuje lub o czym marzy..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="has-photo">
+                        <span class="checkmark"></span>
+                        List posiada zdjęcie
+                    </label>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" onclick="showAllLists()" class="btn btn-secondary">Anuluj</button>
+                    <button type="submit" class="btn btn-success">Dodaj list</button>
+                </div>
+            </form>
+        </div>
+    `;
+}
+
+// Obsługa dodawania nowego listu
+async function handleAddList(event) {
+    event.preventDefault();
+    
+    // Pobierz dane z formularza
+    const listData = {
+        numer_listu: document.getElementById('list-number').value.trim(),
+        imie_wiek: document.getElementById('child-name').value.trim(),
+        opis_prezentu: document.getElementById('gift-description').value.trim(),
+        cena_prezentu: document.getElementById('gift-price').value.trim() || null,
+        dodatkowe_uwagi: document.getElementById('additional-notes').value.trim() || null,
+        zdjecie: document.getElementById('has-photo').checked,
+        osoba_rezerwujaca: null,
+        status: 'dostępny'
+    };
+    
+    // Sprawdź czy wymagane pola są wypełnione
+    if (!listData.numer_listu || !listData.imie_wiek || !listData.opis_prezentu) {
+        alert('Proszę wypełnić wszystkie wymagane pola!');
+        return;
+    }
+    
+    try {
+        // Sprawdź czy numer listu już istnieje
+        const { data: existingList } = await supabase
+            .from('listy')
+            .select('numer_listu')
+            .eq('numer_listu', listData.numer_listu)
+            .single();
+            
+        if (existingList) {
+            alert('List z tym numerem już istnieje! Proszę użyć innego numeru.');
+            return;
+        }
+        
+        // Dodaj nowy list do bazy danych
+        const { data, error } = await supabase
+            .from('listy')
+            .insert([listData])
+            .select();
+            
+        if (error) {
+            throw error;
+        }
+        
+        if (data && data.length > 0) {
+            alert('✅ List został pomyślnie dodany!');
+            showAllLists(); // Wróć do widoku wszystkich listów
+        }
+        
+    } catch (err) {
+        console.error('Błąd dodawania listu:', err);
+        alert('❌ Błąd podczas dodawania listu: ' + err.message);
     }
 }
