@@ -1,6 +1,7 @@
 const SUPABASE_URL = 'https://ubkzwrgkccxvyaiagudg.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVia3p3cmdrY2N4dnlhaWFndWRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzMjUxNTYsImV4cCI6MjA3NTkwMTE1Nn0.22DTU-GTxzPEHmpbXkzoUda87S36Hi8QFu_GrG-Zx0Y';
 
+
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Sprawdź czy użytkownik jest już zalogowany przy ładowaniu strony
@@ -24,6 +25,19 @@ async function login() {
 
     if (!email || !password) {
         alert('Proszę wypełnić wszystkie pola!');
+        return;
+    }
+
+    // Tymczasowe logowanie admina (do czasu poprawy bazy danych)
+    if(email === "admin" && password === "admin") {
+        const user = { 
+            id: 1, 
+            mail: "admin", 
+            admin: true 
+        };
+        localStorage.setItem('user', JSON.stringify(user));
+        showAppSection(user);
+        alert('Logowanie udane! Witaj Administratorze!');
         return;
     }
 
@@ -53,12 +67,6 @@ async function login() {
         
     } catch (err) {
         alert('Błąd logowania: ' + err.message);
-    }
-    if(email == "admin" && password == "admin"){
-         const user = email;
-        localStorage.setItem('user', JSON.stringify(user));
-        showAppSection(user);
-        alert('Logowanie udane! Witaj ' + user.mail);
     }
 }
 
@@ -173,8 +181,11 @@ async function showAdminView(user) {
             
             <div class="admin-actions">
                 <h3>Akcje administracyjne</h3>
-                <button onclick="showAllLists()" class="btn btn-primary">Pokaż wszystkie listy</button>
-                <button onclick="showAddListForm()" class="btn btn-success">Dodaj nowy list</button>
+                <div class="action-buttons">
+                    <button onclick="showAllLists()" class="btn btn-primary">Pokaż wszystkie listy</button>
+                    <button onclick="showAddListForm()" class="btn btn-success">Dodaj nowy list</button>
+                    <button onclick="showBulkAddForm()" class="btn btn-info">Masowe dodawanie</button>
+                </div>
             </div>
             
             <div id="admin-content" class="loading">
@@ -201,7 +212,7 @@ async function showUserView(user) {
             
             <div class="user-sections">
                 <div class="user-section">
-                    <h3> Listy dostępne do rezerwacji</h3>
+                    <h3>Listy dostępne do rezerwacji</h3>
                     <div id="available-lists" class="loading">
                         Ładowanie dostępnych listów...
                     </div>
@@ -223,7 +234,6 @@ async function showUserView(user) {
 // Załaduj wszystkie listy (dla admina)
 async function loadAllLists() {
     try {
-        // Pobierz listy - UŻYJ POPRAWNYCH NAZW KOLUMN
         const { data: lists, error: listsError } = await supabase
             .from('listy')
             .select('*')
@@ -252,7 +262,6 @@ async function loadAllLists() {
             }
         }
 
-        // Połącz dane ręcznie
         const listsWithUsers = lists.map(list => ({
             ...list,
             user_email: list.osoba_rezerwujaca ? 
@@ -266,7 +275,7 @@ async function loadAllLists() {
         console.error('Błąd ładowania list:', err);
         document.getElementById('admin-content').innerHTML = `
             <div class="error-message">
-                <h3> Błąd ładowania list</h3>
+                <h3>❌ Błąd ładowania list</h3>
                 <p>${err.message}</p>
                 <button onclick="createSampleLists()" class="btn btn-primary">Utwórz przykładowe listy</button>
             </div>
@@ -277,7 +286,7 @@ async function loadAllLists() {
 // Załaduj listy dla użytkownika
 async function loadUserLists(userId) {
     try {
-        // Listy dostępne - UŻYJ POPRAWNYCH NAZW
+        // Listy dostępne
         const { data: availableLists, error: error1 } = await supabase
             .from('listy')
             .select('*')
@@ -300,7 +309,7 @@ async function loadUserLists(userId) {
     }
 }
 
-// Wyświetl wszystkie listy (dla admina) - POPRAWIONE NAZWY
+// Wyświetl wszystkie listy (dla admina)
 function displayAllLists(lists) {
     const content = document.getElementById('admin-content');
     
@@ -337,7 +346,16 @@ function displayAllLists(lists) {
                     <h4>List ${list.numer_listu}</h4>
                     <p><strong>Dziecko:</strong> ${list.imie_wiek}</p>
                     <p><strong>Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
-                    ${list.zdjecie ? `<p><strong>Zdjęcie:</strong> Dostępne</p>` : ''}
+                    ${list.zdjecie_url ? `
+                        <div class="photo-preview">
+                            <img src="${list.zdjecie_url}" alt="Zdjęcie listu ${list.numer_listu}" class="list-photo">
+                            <button onclick="viewPhoto('${list.zdjecie_url}')" class="btn btn-small btn-info">Powiększ zdjęcie</button>
+                        </div>
+                    ` : `
+                        <div class="photo-placeholder">
+                            📄 Brak zdjęcia
+                        </div>
+                    `}
                     <p><strong>Status:</strong> 
                         <span class="status-badge status-${list.status}">${list.status}</span>
                     </p>
@@ -347,6 +365,7 @@ function displayAllLists(lists) {
                             `<button onclick="reserveAsAdmin('${list.numer_listu}')" class="btn btn-success btn-small">Zarezerwuj jako admin</button>` :
                             `<button onclick="cancelReservation('${list.numer_listu}')" class="btn btn-danger btn-small">Anuluj rezerwację</button>`
                         }
+                        <button onclick="editList('${list.numer_listu}')" class="btn btn-info btn-small">Edytuj</button>
                     </div>
                 </div>
             `).join('')}
@@ -354,7 +373,7 @@ function displayAllLists(lists) {
     `;
 }
 
-// Wyświetl dostępne listy (dla użytkownika) - POPRAWIONE
+// Wyświetl dostępne listy (dla użytkownika)
 function displayAvailableLists(lists) {
     const container = document.getElementById('available-lists');
     const user = JSON.parse(localStorage.getItem('user'));
@@ -369,7 +388,16 @@ function displayAvailableLists(lists) {
             <h4>List ${list.numer_listu}</h4>
             <p><strong>Dziecko:</strong> ${list.imie_wiek}</p>
             <p><strong>Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
-            ${list.zdjecie ? `<p><em>Zdjęcie dostępne</em></p>` : ''}
+            ${list.zdjecie_url ? `
+                <div class="photo-preview">
+                    <img src="${list.zdjecie_url}" alt="Zdjęcie listu ${list.numer_listu}" class="list-photo">
+                    <button onclick="viewPhoto('${list.zdjecie_url}')" class="btn btn-small btn-info">Powiększ zdjęcie</button>
+                </div>
+            ` : `
+                <div class="photo-placeholder">
+                    📄 Brak zdjęcia
+                </div>
+            `}
             <div class="list-actions">
                 <button onclick="reserveList('${list.numer_listu}', ${user.id})" class="btn btn-success">
                     Zarezerwuj ten list
@@ -379,7 +407,7 @@ function displayAvailableLists(lists) {
     `).join('');
 }
 
-// Wyświetl listy użytkownika - POPRAWIONE
+// Wyświetl listy użytkownika
 function displayMyLists(lists) {
     const container = document.getElementById('my-lists');
     
@@ -393,7 +421,16 @@ function displayMyLists(lists) {
             <h4>List ${list.numer_listu}</h4>
             <p><strong>Dziecko:</strong> ${list.imie_wiek}</p>
             <p><strong>Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
-            ${list.zdjecie ? `<p><em>Zdjęcie dostępne</em></p>` : ''}
+            ${list.zdjecie_url ? `
+                <div class="photo-preview">
+                    <img src="${list.zdjecie_url}" alt="Zdjęcie listu ${list.numer_listu}" class="list-photo">
+                    <button onclick="viewPhoto('${list.zdjecie_url}')" class="btn btn-small btn-info">Powiększ zdjęcie</button>
+                </div>
+            ` : `
+                <div class="photo-placeholder">
+                    📄 Brak zdjęcia
+                </div>
+            `}
             <p><strong>Status:</strong> 
                 <span class="status-badge status-${list.status}">${list.status}</span>
             </p>
@@ -494,10 +531,6 @@ async function cancelReservation(listNumber) {
     }
 }
 
-function showAllLists() {
-    loadAllLists();
-}
-
 // Funkcja do tworzenia przykładowych listów
 async function createSampleLists() {
     try {
@@ -512,8 +545,7 @@ async function createSampleLists() {
         for (const list of sampleLists) {
             const { error } = await supabase
                 .from('listy')
-                .insert([list])
-                .select();
+                .insert([list]);
 
             if (error && !error.message.includes('duplicate key')) {
                 console.error('Błąd dodawania listu:', error);
@@ -527,6 +559,255 @@ async function createSampleLists() {
         alert('Błąd tworzenia listów: ' + err.message);
         console.error(err);
     }
+}
+
+function showAllLists() {
+    loadAllLists();
+}
+
+// ==============================================
+// FUNKCJE DODAWANIA LISTÓW DLA ADMINISTRATORA
+// ==============================================
+
+function showAddListForm() {
+    const content = document.getElementById('admin-content');
+    content.innerHTML = `
+        <div class="add-list-form fade-in">
+            <div class="form-header">
+                <h3>📝 Dodaj nowy list</h3>
+                <button onclick="showAllLists()" class="btn btn-secondary">← Wróć do list</button>
+            </div>
+            
+            <form id="add-list-form" onsubmit="handleAddList(event)">
+                <div class="form-group">
+                    <label for="list-number">Numer listu *</label>
+                    <input type="text" id="list-number" class="input" required 
+                           placeholder="np. L001, L002">
+                </div>
+                
+                <div class="form-group">
+                    <label for="child-name">Dziecko (imię i wiek) *</label>
+                    <input type="text" id="child-name" class="input" required 
+                           placeholder="np. Ania, 5 lat">
+                </div>
+                
+                <div class="form-group">
+                    <label for="gift-description">Opis prezentu *</label>
+                    <textarea id="gift-description" class="input textarea" required 
+                              placeholder="Opisz czego dziecko potrzebuje lub o czym marzy..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="list-photo">Zdjęcie listu</label>
+                    <input type="file" id="list-photo" class="input file-input" 
+                           accept="image/*" onchange="previewPhoto(event)">
+                    <div id="photo-preview-container"></div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" onclick="showAllLists()" class="btn btn-secondary">Anuluj</button>
+                    <button type="submit" class="btn btn-success">Dodaj list</button>
+                </div>
+            </form>
+        </div>
+    `;
+}
+
+// Podgląd zdjęcia przed uploadem
+function previewPhoto(event) {
+    const file = event.target.files[0];
+    const previewContainer = document.getElementById('photo-preview-container');
+    
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewContainer.innerHTML = `
+                <div class="photo-preview">
+                    <img src="${e.target.result}" class="list-photo" alt="Podgląd zdjęcia">
+                    <button type="button" onclick="removePhotoPreview()" class="remove-photo">×</button>
+                </div>
+            `;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// Usuń podgląd zdjęcia
+function removePhotoPreview() {
+    document.getElementById('list-photo').value = '';
+    document.getElementById('photo-preview-container').innerHTML = '';
+}
+
+async function handleAddList(event) {
+    event.preventDefault();
+    console.log('🟡 Rozpoczynam dodawanie listu...');
+    
+    const listData = {
+        numer_listu: document.getElementById('list-number').value.trim(),
+        imie_wiek: document.getElementById('child-name').value.trim(),
+        opis_prezentu: document.getElementById('gift-description').value.trim(),
+        osoba_rezerwujaca: null,
+        status: 'dostępny',
+        zdjecie_url: null
+    };
+    
+    console.log('📋 Dane listu:', listData);
+    
+    // Walidacja
+    if (!listData.numer_listu || !listData.imie_wiek || !listData.opis_prezentu) {
+        alert('Proszę wypełnić wszystkie wymagane pola!');
+        return;
+    }
+    
+    try {
+        console.log('🔍 Sprawdzam czy numer listu istnieje...');
+        
+        const { data: existingList, error: checkError } = await supabase
+            .from('listy')
+            .select('numer_listu')
+            .eq('numer_listu', listData.numer_listu)
+            .single();
+            
+        console.log('Wynik sprawdzenia:', existingList, checkError);
+            
+        if (existingList) {
+            alert('List z tym numerem już istnieje! Proszę użyć innego numeru.');
+            return;
+        }
+        
+        // Upload zdjęcia jeśli zostało dodane
+        const photoFile = document.getElementById('list-photo').files[0];
+        if (photoFile) {
+            console.log('📸 Rozpoczynam upload zdjęcia...');
+            
+            const fileExt = photoFile.name.split('.').pop();
+            const fileName = `${listData.numer_listu}_${Date.now()}.${fileExt}`;
+            const filePath = `list-photos/${fileName}`;
+            
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('list-photos')
+                .upload(filePath, photoFile);
+                
+            if (uploadError) {
+                console.error('❌ Błąd uploadu zdjęcia:', uploadError);
+                alert('Błąd podczas uploadu zdjęcia: ' + uploadError.message);
+                return;
+            }
+            
+            // Pobierz publiczny URL zdjęcia
+            const { data: urlData } = supabase.storage
+                .from('list-photos')
+                .getPublicUrl(filePath);
+                
+            listData.zdjecie_url = urlData.publicUrl;
+            console.log('✅ Zdjęcie uploaded:', listData.zdjecie_url);
+        }
+        
+        console.log('💾 Dodaję list do bazy...');
+        
+        const { data, error } = await supabase
+            .from('listy')
+            .insert([listData]);
+            
+        console.log('Wynik dodawania:', data, error);
+            
+        if (error) {
+            console.error('❌ Błąd Supabase:', error);
+            alert('❌ Błąd podczas dodawania listu: ' + error.message);
+            return;
+        }
+        
+        console.log('✅ List dodany pomyślnie!');
+        alert('✅ List został pomyślnie dodany!');
+        showAllLists();
+        
+    } catch (err) {
+        console.error('❌ Błąd catch:', err);
+        alert('❌ Błąd podczas dodawania listu: ' + err.message);
+    }
+}
+
+function showBulkAddForm() {
+    const content = document.getElementById('admin-content');
+    content.innerHTML = `
+        <div class="add-list-form">
+            <div class="form-header">
+                <h3>📦 Masowe dodawanie listów</h3>
+                <button onclick="showAllLists()" class="btn btn-secondary">← Wróć</button>
+            </div>
+            
+            <p><strong>Format:</strong> każdy list w nowej linii, pola oddzielone przecinkami:<br>
+            <code>NumerListu,Imię i wiek,Opis prezentu</code></p>
+            
+            <form id="bulk-add-form" onsubmit="handleBulkAdd(event)">
+                <div class="form-group">
+                    <label for="bulk-data">Dane listów *</label>
+                    <textarea id="bulk-data" class="input textarea" required 
+                              placeholder="L006,Maciek 6 lat,Klocki Lego&#10;L007,Karolina 4 lat,Lalka"
+                              rows="10"></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" onclick="showAllLists()" class="btn btn-secondary">Anuluj</button>
+                    <button type="submit" class="btn btn-success">Dodaj listy</button>
+                </div>
+            </form>
+        </div>
+    `;
+}
+
+async function handleBulkAdd(event) {
+    event.preventDefault();
+    
+    const bulkData = document.getElementById('bulk-data').value.trim();
+    const lines = bulkData.split('\n').filter(line => line.trim());
+    const lists = [];
+    
+    for (const line of lines) {
+        const parts = line.split(',').map(part => part.trim());
+        if (parts.length >= 3) {
+            lists.push({
+                numer_listu: parts[0],
+                imie_wiek: parts[1],
+                opis_prezentu: parts[2],
+                osoba_rezerwujaca: null,
+                status: 'dostępny',
+                zdjecie_url: null
+            });
+        }
+    }
+    
+    if (lists.length === 0) {
+        alert('Nie znaleziono poprawnych danych!');
+        return;
+    }
+    
+    try {
+        const { data, error } = await supabase
+            .from('listy')
+            .insert(lists);
+            
+        if (error) {
+            alert('Błąd: ' + error.message);
+            return;
+        }
+        
+        alert(`✅ Dodano ${lists.length} listów!`);
+        showAllLists();
+        
+    } catch (err) {
+        alert('Błąd: ' + err.message);
+    }
+}
+
+// Podgląd zdjęcia w pełnym rozmiarze
+function viewPhoto(photoUrl) {
+    window.open(photoUrl, '_blank');
+}
+
+// Edycja listu
+function editList(listNumber) {
+    alert('Funkcja edycji listu będzie dostępna wkrótce!');
 }
 
 // Obsługa Enter w formularzach
@@ -556,107 +837,5 @@ function checkLocalStorage() {
     console.log('LocalStorage user:', user);
     if (user) {
         console.log('Parsed user:', JSON.parse(user));
-    }
-}
-
-// Funkcja pokazująca formularz dodawania listu
-function showAddListForm() {
-    const content = document.getElementById('admin-content');
-    content.innerHTML = `
-        <div class="add-list-form fade-in">
-            <div class="form-header">
-                <h3>Dodaj nowy list</h3>
-                <button onclick="showAllLists()" class="btn btn-secondary">← Wróć do list</button>
-            </div>
-            
-            <form id="add-list-form" onsubmit="handleAddList(event)">
-                <div class="form-group">
-                    <label for="list-number">Numer listu *</label>
-                    <input type="text" id="list-number" class="input" required 
-                           placeholder="np. L001, L002">
-                </div>
-                
-                <div class="form-group">
-                    <label for="child-name">Dziecko (imię i wiek) *</label>
-                    <input type="text" id="child-name" class="input" required 
-                           placeholder="np. Ania, 5 lat">
-                </div>
-                
-                <div class="form-group">
-                    <label for="gift-description">Opis prezentu *</label>
-                    <textarea id="gift-description" class="input textarea" required 
-                              placeholder="Opisz czego dziecko potrzebuje lub o czym marzy..."></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="has-photo">
-                        <span class="checkmark"></span>
-                        List posiada zdjęcie
-                    </label>
-                </div>
-                
-                <div class="form-actions">
-                    <button type="button" onclick="showAllLists()" class="btn btn-secondary">Anuluj</button>
-                    <button type="submit" class="btn btn-success">Dodaj list</button>
-                </div>
-            </form>
-        </div>
-    `;
-}
-
-// Obsługa dodawania nowego listu
-async function handleAddList(event) {
-    event.preventDefault();
-    
-    // Pobierz dane z formularza
-    const listData = {
-        numer_listu: document.getElementById('list-number').value.trim(),
-        imie_wiek: document.getElementById('child-name').value.trim(),
-        opis_prezentu: document.getElementById('gift-description').value.trim(),
-        cena_prezentu: document.getElementById('gift-price').value.trim() || null,
-        dodatkowe_uwagi: document.getElementById('additional-notes').value.trim() || null,
-        zdjecie: document.getElementById('has-photo').checked,
-        osoba_rezerwujaca: null,
-        status: 'dostępny'
-    };
-    
-    // Sprawdź czy wymagane pola są wypełnione
-    if (!listData.numer_listu || !listData.imie_wiek || !listData.opis_prezentu) {
-        alert('Proszę wypełnić wszystkie wymagane pola!');
-        return;
-    }
-    
-    try {
-        // Sprawdź czy numer listu już istnieje
-        const { data: existingList } = await supabase
-            .from('listy')
-            .select('numer_listu')
-            .eq('numer_listu', listData.numer_listu)
-            .single();
-            
-        if (existingList) {
-            alert('List z tym numerem już istnieje! Proszę użyć innego numeru.');
-            return;
-        }
-        
-        // Dodaj nowy list do bazy danych
-        const { data, error } = await supabase
-            .from('listy')
-            .insert([listData])
-            .select();
-            
-        if (error) {
-            throw error;
-        }
-        
-        if (data && data.length > 0) {
-            alert('✅ List został pomyślnie dodany!');
-            showAllLists(); // Wróć do widoku wszystkich listów
-        }
-        
-    } catch (err) {
-        console.error('Błąd dodawania listu:', err);
-        alert('❌ Błąd podczas dodawania listu: ' + err.message);
     }
 }
