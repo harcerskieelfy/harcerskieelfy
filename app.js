@@ -646,7 +646,7 @@ async function handleAddList(event) {
         numer_listu: document.getElementById('list-number').value.trim(),
         imie_wiek: document.getElementById('child-name').value.trim(),
         opis_prezentu: document.getElementById('gift-description').value.trim(),
-        osoba_rezerwujaca: '1',
+        osoba_rezerwujaca: null,
         status: 'dostępny',
         zdjecie_url: null
     };
@@ -689,7 +689,7 @@ async function handleAddList(event) {
                 .upload(filePath, photoFile);
                 
             if (uploadError) {
-                console.error('❌ Błąd uploadu zdjęcia:', uploadError);
+                console.error(' Błąd uploadu zdjęcia:', uploadError);
                 alert('Błąd podczas uploadu zdjęcia: ' + uploadError.message);
                 return;
             }
@@ -700,7 +700,7 @@ async function handleAddList(event) {
                 .getPublicUrl(filePath);
                 
             listData.zdjecie_url = urlData.publicUrl;
-            console.log('✅ Zdjęcie uploaded:', listData.zdjecie_url);
+            console.log(' Zdjęcie uploaded:', listData.zdjecie_url);
         }
         
         console.log('💾 Dodaję list do bazy...');
@@ -713,17 +713,17 @@ async function handleAddList(event) {
             
         if (error) {
             console.error('❌ Błąd Supabase:', error);
-            alert('❌ Błąd podczas dodawania listu: ' + error.message);
+            alert(' Błąd podczas dodawania listu: ' + error.message);
             return;
         }
         
-        console.log('✅ List dodany pomyślnie!');
-        alert('✅ List został pomyślnie dodany!');
+        console.log(' List dodany pomyślnie!');
+        alert(' List został pomyślnie dodany!');
         showAllLists();
         
     } catch (err) {
-        console.error('❌ Błąd catch:', err);
-        alert('❌ Błąd podczas dodawania listu: ' + err.message);
+        console.error(' Błąd catch:', err);
+        alert(' Błąd podczas dodawania listu: ' + err.message);
     }
 }
 
@@ -732,7 +732,7 @@ function showBulkAddForm() {
     content.innerHTML = `
         <div class="add-list-form">
             <div class="form-header">
-                <h3>📦 Masowe dodawanie listów</h3>
+                <h3> Masowe dodawanie listów</h3>
                 <button onclick="showAllLists()" class="btn btn-secondary">← Wróć</button>
             </div>
             
