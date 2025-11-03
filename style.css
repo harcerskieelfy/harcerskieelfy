@@ -6,7 +6,7 @@
 
 body {
     font-family: 'Arial', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #2d5201 0%, #6c8f34 100%);
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -19,7 +19,7 @@ body {
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     padding: 2rem;
-    max-width: 500px;
+    max-width: 70%;
     width: 100%;
 }
 
@@ -320,6 +320,72 @@ a:hover {
     padding: 1rem;
     border-radius: 8px;
     border: 1px solid #f5c6cb;
+}
+
+/* Style dla ukrytych zdjęć */
+.photo-container {
+    margin: 10px 0;
+}
+
+.hidden-photo {
+    display: none;
+}
+
+.visible-photo {
+    display: block;
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 8px;
+    margin: 10px 0;
+    border: 2px solid #e9ecef;
+}
+
+.show-photo-btn {
+    background: #17a2b8;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin: 5px 0;
+    transition: background 0.3s ease;
+}
+
+.show-photo-btn:hover {
+    background: #138496;
+}
+
+.hide-photo-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin: 5px 0;
+    transition: background 0.3s ease;
+}
+
+.hide-photo-btn:hover {
+    background: #5a6268;
+}
+
+.photo-placeholder {
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    color: #6c757d;
+    margin: 10px 0;
+}
+
+.photo-info {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin: 5px 0;
 }
 
 /* Animacje */
