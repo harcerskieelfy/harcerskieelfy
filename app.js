@@ -574,7 +574,7 @@ function showAddListForm() {
     content.innerHTML = `
         <div class="add-list-form fade-in">
             <div class="form-header">
-                <h3>📝 Dodaj nowy list</h3>
+                <h3> Dodaj nowy list</h3>
                 <button onclick="showAllLists()" class="btn btn-secondary">← Wróć do list</button>
             </div>
             
@@ -582,19 +582,19 @@ function showAddListForm() {
                 <div class="form-group">
                     <label for="list-number">Numer listu *</label>
                     <input type="text" id="list-number" class="input" required 
-                           placeholder="np. L001, L002">
+                           placeholder="np. B01, C03">
                 </div>
                 
                 <div class="form-group">
                     <label for="child-name">Dziecko (imię i wiek) *</label>
                     <input type="text" id="child-name" class="input" required 
-                           placeholder="np. Ania, 5 lat">
+                           placeholder="np. Pani Halina, 67 lat">
                 </div>
                 
                 <div class="form-group">
                     <label for="gift-description">Opis prezentu *</label>
                     <textarea id="gift-description" class="input textarea" required 
-                              placeholder="Opisz czego dziecko potrzebuje lub o czym marzy..."></textarea>
+                              placeholder="Skarpetki rozmiar 38 ...."></textarea>
                 </div>
                 
                 <div class="form-group">
@@ -640,13 +640,13 @@ function removePhotoPreview() {
 
 async function handleAddList(event) {
     event.preventDefault();
-    console.log('🟡 Rozpoczynam dodawanie listu...');
+    console.log(' Rozpoczynam dodawanie listu...');
     
     const listData = {
         numer_listu: document.getElementById('list-number').value.trim(),
         imie_wiek: document.getElementById('child-name').value.trim(),
         opis_prezentu: document.getElementById('gift-description').value.trim(),
-        osoba_rezerwujaca: null,
+        osoba_rezerwujaca: '1',
         status: 'dostępny',
         zdjecie_url: null
     };
