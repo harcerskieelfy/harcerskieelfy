@@ -672,33 +672,33 @@ function showAddListForm() {
     content.innerHTML = `
         <div class="add-list-form fade-in">
             <div class="form-header">
-                <h3>📝 Dodaj nowy list</h3>
+                <h3> Dodaj nowy list</h3>
                 <button onclick="showAllLists()" class="btn btn-secondary">← Wróć do list</button>
             </div>
             
             <form id="add-list-form" onsubmit="handleAddList(event)">
                 <div class="form-group">
-                    <label for="list-number">🔢 Numer listu *</label>
+                    <label for="list-number"> Numer listu *</label>
                     <input type="text" id="list-number" class="input" required 
                            placeholder="np. L001, L002, L003...">
                     <small style="color: #666; font-size: 0.9rem;">Numer musi być unikalny</small>
                 </div>
                 
                 <div class="form-group">
-                    <label for="child-name">👵 Senior (imię i wiek) *</label>
+                    <label for="child-name"> Senior (imię i wiek) *</label>
                     <input type="text" id="child-name" class="input" required 
                            placeholder="np. Pani Maria, 78 lat">
                 </div>
                 
                 <div class="form-group">
-                    <label for="gift-description">🎁 Opis prezentu *</label>
+                    <label for="gift-description"> Opis prezentu *</label>
                     <textarea id="gift-description" class="input textarea" required 
                               placeholder="Opisz czego senior potrzebuje lub o czym marzy...&#10;np. 'Potrzebuje ciepły koc i herbatę'&#10;np. 'Marzy o ciepłych skarpetach i książce'"
                               rows="4"></textarea>
                 </div>
                 
                 <div class="form-group">
-                    <label for="list-photo">📸 Zdjęcie listu (opcjonalnie)</label>
+                    <label for="list-photo"> Zdjęcie listu (opcjonalnie)</label>
                     <input type="file" id="list-photo" class="input file-input" 
                            accept="image/*" onchange="previewPhoto(event)">
                     <small style="color: #666; font-size: 0.9rem;">Dozwolone formaty: JPG, PNG, GIF (max 5MB)</small>
@@ -706,13 +706,13 @@ function showAddListForm() {
                 </div>
                 
                 <div class="form-actions">
-                    <button type="button" onclick="showAllLists()" class="btn btn-secondary">❌ Anuluj</button>
-                    <button type="submit" class="btn btn-success">✅ Dodaj list</button>
+                    <button type="button" onclick="showAllLists()" class="btn btn-secondary"> Anuluj</button>
+                    <button type="submit" class="btn btn-success"> Dodaj list</button>
                 </div>
             </form>
             
             <div class="form-info">
-                <h4>💡 Wskazówki:</h4>
+                <h4> Wskazówki:</h4>
                 <ul>
                     <li>Pola oznaczone * są wymagane</li>
                     <li>Numer listu powinien być unikalny w systemie</li>
@@ -732,7 +732,7 @@ function previewPhoto(event) {
     if (file) {
         // Sprawdź rozmiar pliku (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
-            alert('❌ Plik jest za duży! Maksymalny rozmiar to 5MB.');
+            alert(' Plik jest za duży! Maksymalny rozmiar to 5MB.');
             event.target.value = '';
             return;
         }
@@ -741,13 +741,13 @@ function previewPhoto(event) {
         reader.onload = function(e) {
             previewContainer.innerHTML = `
                 <div style="text-align: center;">
-                    <p style="color: #4caf50; font-weight: 600; margin-bottom: 10px;">📸 Podgląd zdjęcia:</p>
+                    <p style="color: #4caf50; font-weight: 600; margin-bottom: 10px;"> Podgląd zdjęcia:</p>
                     <img src="${e.target.result}" 
                          style="max-width: 300px; max-height: 300px; border-radius: 10px; border: 3px solid #4caf50; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"
                          alt="Podgląd zdjęcia">
                     <br>
                     <button type="button" onclick="removePhotoPreview()" class="btn btn-danger btn-small" style="margin-top: 10px;">
-                        🗑️ Usuń zdjęcie
+                        Usuń zdjęcie
                     </button>
                 </div>
             `;
@@ -774,11 +774,11 @@ async function handleAddList(event) {
         zdjecie_url: null
     };
     
-    console.log('📋 Dane listu:', listData);
+    console.log(' Dane listu:', listData);
     
     // Walidacja
     if (!listData.numer_listu || !listData.imie_wiek || !listData.opis_prezentu) {
-        alert('❌ Proszę wypełnić wszystkie wymagane pola!');
+        alert(' Proszę wypełnić wszystkie wymagane pola!');
         return;
     }
     
@@ -791,7 +791,7 @@ async function handleAddList(event) {
             .single();
             
         if (existingList) {
-            alert('❌ List z tym numerem już istnieje! Proszę użyć innego numeru.');
+            alert(' List z tym numerem już istnieje! Proszę użyć innego numeru.');
             return;
         }
         
@@ -799,7 +799,7 @@ async function handleAddList(event) {
         const photoFile = document.getElementById('list-photo').files[0];
         if (photoFile) {
             try {
-                console.log('📸 Rozpoczynam upload zdjęcia...');
+                console.log(' Rozpoczynam upload zdjęcia...');
                 
                 const fileExt = photoFile.name.split('.').pop();
                 const fileName = `${listData.numer_listu}_${Date.now()}.${fileExt}`;
@@ -817,15 +817,15 @@ async function handleAddList(event) {
                     .getPublicUrl(filePath);
                     
                 listData.zdjecie_url = urlData.publicUrl;
-                console.log('✅ Zdjęcie uploaded:', listData.zdjecie_url);
+                console.log(' Zdjęcie uploaded:', listData.zdjecie_url);
             } catch (uploadError) {
-                console.error('❌ Błąd uploadu zdjęcia:', uploadError);
-                alert('⚠️ Uwaga: Zdjęcie nie zostało zapisane. ' + uploadError.message);
+                console.error(' Błąd uploadu zdjęcia:', uploadError);
+                alert(' Uwaga: Zdjęcie nie zostało zapisane. ' + uploadError.message);
                 // Kontynuuj bez zdjęcia
             }
         }
         
-        console.log('💾 Dodaję list do bazy...');
+        console.log(' Dodaję list do bazy...');
         
         const { data, error } = await supabase
             .from('listy')
@@ -834,18 +834,18 @@ async function handleAddList(event) {
         console.log('Wynik dodawania:', data, error);
             
         if (error) {
-            console.error('❌ Błąd Supabase:', error);
-            alert('❌ Błąd podczas dodawania listu: ' + error.message);
+            console.error(' Błąd Supabase:', error);
+            alert(' Błąd podczas dodawania listu: ' + error.message);
             return;
         }
         
-        console.log('✅ List dodany pomyślnie!');
-        alert('✅ List został pomyślnie dodany!' + (listData.zdjecie_url ? ' Zdjęcie zostało zapisane.' : ''));
+        console.log(' List dodany pomyślnie!');
+        alert('List został pomyślnie dodany!' + (listData.zdjecie_url ? ' Zdjęcie zostało zapisane.' : ''));
         showAllLists();
         
     } catch (err) {
-        console.error('❌ Błąd catch:', err);
-        alert('❌ Błąd podczas dodawania listu: ' + err.message);
+        console.error(' Błąd catch:', err);
+        alert(' Błąd podczas dodawania listu: ' + err.message);
     }
 }
 
