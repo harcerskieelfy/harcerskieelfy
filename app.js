@@ -490,12 +490,12 @@ async function reserveList(listNumber, userId) {
 }
 
 // Rezerwacja przez admina
-async function reserveAsAdmin(listNumber) {
+async function reserveAsAdmin(listNumber, userID) {
     try {
         const { data, error } = await supabase
             .from('listy')
             .update({
-                osoba_rezerwujaca: null,
+                osoba_rezerwujaca: userID,
                 status: 'zarezerwowany'
             })
             .eq('numer_listu', listNumber)
