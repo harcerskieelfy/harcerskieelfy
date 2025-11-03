@@ -160,14 +160,13 @@ async function showAdminView(user) {
         <div class="admin-view fade-in">
             <div class="admin-header">
                 <div>
-                    <h2>🎅 Panel administratora</h2>
+                    <h2> Panel administratora</h2>
                     <p>Witaj, ${user.mail}</p>
                 </div>
-                <button onclick="logout()" class="btn btn-secondary">🚪 Wyloguj</button>
+                <button onclick="logout()" class="btn btn-secondary"> Wyloguj</button>
             </div>
             
             <div class="admin-actions">
-                <h3>📊 Akcje administracyjne</h3>
                 <div class="action-buttons">
                     <button onclick="showAllLists()" class="btn btn-primary">📋 Pokaż wszystkie listy</button>
                     <button onclick="showAddListForm()" class="btn btn-success">➕ Dodaj nowy list</button>
