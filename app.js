@@ -170,7 +170,6 @@ async function showAdminView(user) {
                 <div class="action-buttons">
                     <button onclick="showAllLists()" class="btn btn-primary">📋 Pokaż wszystkie listy</button>
                     <button onclick="showAddListForm()" class="btn btn-success">➕ Dodaj nowy list</button>
-                    <button onclick="showBulkAddForm()" class="btn btn-info">📦 Masowe dodawanie</button>
                 </div>
             </div>
             
