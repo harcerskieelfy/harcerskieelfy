@@ -1,7 +1,5 @@
-const SUPABASE_URL = 'https://ubkzwrgkccxvyaiagudg.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVia3p3cmdrY2N4dnlhaWFndWRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzMjUxNTYsImV4cCI6MjA3NTkwMTE1Nn0.22DTU-GTxzPEHmpbXkzoUda87S36Hi8QFu_GrG-Zx0Y';
-
-
+const SUPABASE_URL = 'https://twoj-url.supabase.co';
+const SUPABASE_ANON_KEY = 'twoj-anon-key';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Sprawdź czy użytkownik jest już zalogowany przy ładowaniu strony
