@@ -301,9 +301,9 @@ function displayAllLists(lists) {
         <div class="lists-grid">
             ${lists.map(list => `
                 <div class="list-card ${list.status}">
-                    <h4>📮 List ${list.numer_listu}</h4>
-                    <p><strong>👶 Dziecko:</strong> ${list.imie_wiek}</p>
-                    <p><strong>🎁 Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
+                    <h4> List ${list.numer_listu}</h4>
+                    <p><strong>Senior :</strong> ${list.imie_wiek}</p>
+                    <p><strong>Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
                     
                     <div class="photo-container">
                         ${list.zdjecie_url ? `
@@ -350,9 +350,9 @@ function displayAvailableLists(lists) {
 
     container.innerHTML = lists.map(list => `
         <div class="list-card available">
-            <h4>📮 List ${list.numer_listu}</h4>
-            <p><strong>👶 Dziecko:</strong> ${list.imie_wiek}</p>
-            <p><strong>🎁 Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
+            <h4>List ${list.numer_listu}</h4>
+            <p><strong>Senior:</strong> ${list.imie_wiek}</p>
+            <p><strong>Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
             
             <div class="photo-container">
                 ${list.zdjecie_url ? `
@@ -390,9 +390,9 @@ function displayMyLists(lists) {
 
     container.innerHTML = lists.map(list => `
         <div class="list-card reserved">
-            <h4>📮 List ${list.numer_listu}</h4>
-            <p><strong>👶 Dziecko:</strong> ${list.imie_wiek}</p>
-            <p><strong>🎁 Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
+            <h4> List ${list.numer_listu}</h4>
+            <p><strong>Senior:</strong> ${list.imie_wiek}</p>
+            <p><strong>Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
             
             <div class="photo-container">
                 ${list.zdjecie_url ? `
