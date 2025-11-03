@@ -204,6 +204,7 @@ async function showUserView(user) {
                 <div id="my-lists" class="loading">
                 	Jeszcze nie zarezerwoałeś żadnych listów
                 </div>
+            </div>
                 
             <div class="user-sections">
                 <div class="user-section">
