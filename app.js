@@ -28,7 +28,7 @@ async function login() {
         return;
     }
 
-    // Tymczasowe logowanie admina (do czasu poprawy bazy danych)
+    // Tymczasowe logowanie admina
     if(email === "admin" && password === "admin") {
         const user = { 
             id: 1, 
@@ -47,8 +47,6 @@ async function login() {
             .select('*')
             .eq('mail', email)
             .eq('haslo', password);
-
-        console.log('Wynik zapytania:', data, error);
 
         if (error) {
             alert('Błąd bazy danych: ' + error.message);
@@ -107,7 +105,6 @@ async function register() {
 
         if (error) {
             alert('Błąd rejestracji: ' + error.message);
-
         } else {
             alert('Rejestracja udana! Możesz się teraz zalogować.');
             showLogin();
@@ -125,7 +122,6 @@ function logout() {
 
 // Pokazywanie formularza logowania
 function showLogin() {
-    console.log('showLogin called');
     document.getElementById('login-form').style.display = 'block';
     document.getElementById('register-form').style.display = 'none';
     document.getElementById('app-section').style.display = 'none';
@@ -139,7 +135,6 @@ function showLogin() {
 
 // Pokazywanie formularza rejestracji
 function showRegister() {
-    console.log('showRegister called');
     document.getElementById('login-form').style.display = 'none';
     document.getElementById('register-form').style.display = 'block';
     document.getElementById('app-section').style.display = 'none';
@@ -147,17 +142,9 @@ function showRegister() {
 
 // Pokazywanie głównej aplikacji
 function showAppSection(userData) {
-    console.log('showAppSection called with:', userData);
-    
-    // UKRYJ formularze
     document.getElementById('login-form').style.display = 'none';
     document.getElementById('register-form').style.display = 'none';
-    
-    // POKAŻ aplikację
-    const appSection = document.getElementById('app-section');
-    appSection.style.display = 'block';
-    
-    console.log('App section display:', appSection.style.display);
+    document.getElementById('app-section').style.display = 'block';
     
     if (userData.admin) {
         showAdminView(userData);
@@ -173,23 +160,23 @@ async function showAdminView(user) {
         <div class="admin-view fade-in">
             <div class="admin-header">
                 <div>
-                    <h2>Panel administratora</h2>
+                    <h2>🎅 Panel administratora</h2>
                     <p>Witaj, ${user.mail}</p>
                 </div>
-                <button onclick="logout()" class="btn btn-secondary">Wyloguj</button>
+                <button onclick="logout()" class="btn btn-secondary">🚪 Wyloguj</button>
             </div>
             
             <div class="admin-actions">
-                <h3>Akcje administracyjne</h3>
+                <h3>📊 Akcje administracyjne</h3>
                 <div class="action-buttons">
-                    <button onclick="showAllLists()" class="btn btn-primary">Pokaż wszystkie listy</button>
-                    <button onclick="showAddListForm()" class="btn btn-success">Dodaj nowy list</button>
-                    <button onclick="showBulkAddForm()" class="btn btn-info">Masowe dodawanie</button>
+                    <button onclick="showAllLists()" class="btn btn-primary">📋 Pokaż wszystkie listy</button>
+                    <button onclick="showAddListForm()" class="btn btn-success">➕ Dodaj nowy list</button>
+                    <button onclick="showBulkAddForm()" class="btn btn-info">📦 Masowe dodawanie</button>
                 </div>
             </div>
             
             <div id="admin-content" class="loading">
-                Ładowanie danych...
+                🎄 Ładowanie danych...
             </div>
         </div>
     `;
@@ -204,24 +191,24 @@ async function showUserView(user) {
         <div class="user-view fade-in">
             <div class="user-header">
                 <div>
-                    <h2>System Rezerwacji Listów</h2>
+                    <h2>🎁 System Rezerwacji Listów</h2>
                     <p>Witaj, ${user.mail}!</p>
                 </div>
-                <button onclick="logout()" class="btn btn-secondary">Wyloguj</button>
+                <button onclick="logout()" class="btn btn-secondary">🚪 Wyloguj</button>
             </div>
             
             <div class="user-sections">
                 <div class="user-section">
-                    <h3>Listy dostępne do rezerwacji</h3>
+                    <h3>📜 Listy dostępne do rezerwacji</h3>
                     <div id="available-lists" class="loading">
-                        Ładowanie dostępnych listów...
+                        🎄 Ładowanie dostępnych listów...
                     </div>
                 </div>
                 
                 <div class="user-section">
-                    <h3>Twoje zarezerwowane listy</h3>
+                    <h3>⭐ Twoje zarezerwowane listy</h3>
                     <div id="my-lists" class="loading">
-                        Ładowanie Twoich listów...
+                        🎄 Ładowanie Twoich listów...
                     </div>
                 </div>
             </div>
@@ -231,6 +218,246 @@ async function showUserView(user) {
     await loadUserLists(user.id);
 }
 
+// Załaduj wszystkie listy (dla admina)
+async function loadAllLists() {
+    try {
+        const { data: lists, error } = await supabase
+            .from('listy')
+            .select('*')
+            .order('numer_listu');
+
+        if (error) throw error;
+
+        displayAllLists(lists || []);
+
+    } catch (err) {
+        console.error('Błąd ładowania list:', err);
+        document.getElementById('admin-content').innerHTML = `
+            <div class="error-message">
+                <h3>❌ Błąd ładowania list</h3>
+                <p>${err.message}</p>
+                <button onclick="createSampleLists()" class="btn btn-primary">🎄 Utwórz przykładowe listy</button>
+            </div>
+        `;
+    }
+}
+
+// Załaduj listy dla użytkownika
+async function loadUserLists(userId) {
+    try {
+        // Listy dostępne
+        const { data: availableLists, error: error1 } = await supabase
+            .from('listy')
+            .select('*')
+            .eq('status', 'dostępny')
+            .order('numer_listu');
+
+        // Listy zarezerwowane przez użytkownika
+        const { data: myLists, error: error2 } = await supabase
+            .from('listy')
+            .select('*')
+            .eq('osoba_rezerwujaca', userId)
+            .order('numer_listu');
+
+        if (!error1 && !error2) {
+            displayAvailableLists(availableLists || []);
+            displayMyLists(myLists || []);
+        }
+    } catch (err) {
+        console.error('Błąd:', err);
+    }
+}
+
+// Wyświetl wszystkie listy (dla admina)
+function displayAllLists(lists) {
+    const content = document.getElementById('admin-content');
+    
+    if (!lists || lists.length === 0) {
+        content.innerHTML = '<div class="photo-placeholder">📭 Brak listów w systemie</div>';
+        return;
+    }
+
+    const total = lists.length;
+    const available = lists.filter(l => l.status === 'dostępny').length;
+    const reserved = lists.filter(l => l.status === 'zarezerwowany').length;
+
+    content.innerHTML = `
+        <div class="admin-stats">
+            <div class="stat-card">
+                <span class="stat-number">${total}</span>
+                <span class="stat-label">Wszystkie listy</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">${available}</span>
+                <span class="stat-label">Dostępne</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">${reserved}</span>
+                <span class="stat-label">Zarezerwowane</span>
+            </div>
+        </div>
+        
+        <h3>📋 Wszystkie listy (${lists.length})</h3>
+        <div class="lists-grid">
+            ${lists.map(list => `
+                <div class="list-card ${list.status}">
+                    <h4>📮 List ${list.numer_listu}</h4>
+                    <p><strong>👶 Dziecko:</strong> ${list.imie_wiek}</p>
+                    <p><strong>🎁 Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
+                    
+                    <div class="photo-container">
+                        ${list.zdjecie_url ? `
+                            <button onclick="togglePhoto('${list.numer_listu}')" class="show-photo-btn" id="btn-${list.numer_listu}">
+                                👁️ Pokaż zdjęcie
+                            </button>
+                            <img src="${list.zdjecie_url}" 
+                                 alt="Zdjęcie listu ${list.numer_listu}" 
+                                 style="display: none; max-width: 100%; max-height: 400px; border-radius: 10px; margin: 15px 0; border: 3px solid #4caf50; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"
+                                 id="img-${list.numer_listu}"
+                                 onerror="document.getElementById('btn-${list.numer_listu}').style.display='none';">
+                        ` : `
+                            <div class="photo-placeholder">
+                                📄 Brak zdjęcia
+                            </div>
+                        `}
+                    </div>
+                    
+                    <p><strong>📊 Status:</strong> 
+                        <span class="status-badge status-${list.status}">${list.status}</span>
+                    </p>
+                    
+                    <div class="list-actions">
+                        ${list.status === 'dostępny' ? 
+                            `<button onclick="reserveAsAdmin('${list.numer_listu}')" class="btn btn-success btn-small">✅ Zarezerwuj</button>` :
+                            `<button onclick="cancelReservation('${list.numer_listu}')" class="btn btn-danger btn-small">❌ Anuluj rezerwację</button>`
+                        }
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+// Wyświetl dostępne listy (dla użytkownika)
+function displayAvailableLists(lists) {
+    const container = document.getElementById('available-lists');
+    const user = JSON.parse(localStorage.getItem('user'));
+    
+    if (!lists || lists.length === 0) {
+        container.innerHTML = '<div class="photo-placeholder">📭 Brak dostępnych listów</div>';
+        return;
+    }
+
+    container.innerHTML = lists.map(list => `
+        <div class="list-card available">
+            <h4>📮 List ${list.numer_listu}</h4>
+            <p><strong>👶 Dziecko:</strong> ${list.imie_wiek}</p>
+            <p><strong>🎁 Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
+            
+            <div class="photo-container">
+                ${list.zdjecie_url ? `
+                    <button onclick="togglePhoto('${list.numer_listu}')" class="show-photo-btn" id="btn-${list.numer_listu}">
+                        👁️ Pokaż zdjęcie
+                    </button>
+                    <img src="${list.zdjecie_url}" 
+                         alt="Zdjęcie listu ${list.numer_listu}" 
+                         style="display: none; max-width: 100%; max-height: 400px; border-radius: 10px; margin: 15px 0; border: 3px solid #4caf50; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"
+                         id="img-${list.numer_listu}"                         onerror="document.getElementById('btn-${list.numer_listu}').style.display='none';">
+                ` : `
+                    <div class="photo-placeholder">
+                        📄 Brak zdjęcia
+                    </div>
+                `}
+            </div>
+            
+            <div class="list-actions">
+                <button onclick="reserveList('${list.numer_listu}', ${user.id})" class="btn btn-success">
+                    ✅ Zarezerwuj ten list
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Wyświetl listy użytkownika
+function displayMyLists(lists) {
+    const container = document.getElementById('my-lists');
+    
+    if (!lists || lists.length === 0) {
+        container.innerHTML = '<div class="photo-placeholder">📭 Nie masz zarezerwowanych listów</div>';
+        return;
+    }
+
+    container.innerHTML = lists.map(list => `
+        <div class="list-card reserved">
+            <h4>📮 List ${list.numer_listu}</h4>
+            <p><strong>👶 Dziecko:</strong> ${list.imie_wiek}</p>
+            <p><strong>🎁 Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
+            
+            <div class="photo-container">
+                ${list.zdjecie_url ? `
+                    <button onclick="togglePhoto('${list.numer_listu}')" class="show-photo-btn" id="btn-${list.numer_listu}">
+                        👁️ Pokaż zdjęcie
+                    </button>
+                    <img src="${list.zdjecie_url}" 
+                         alt="Zdjęcie listu ${list.numer_listu}" 
+                         style="display: none; max-width: 100%; max-height: 400px; border-radius: 10px; margin: 15px 0; border: 3px solid #4caf50; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"
+                         id="img-${list.numer_listu}"
+                         onerror="document.getElementById('btn-${list.numer_listu}').style.display='none';">
+                ` : `
+                    <div class="photo-placeholder">
+                        📄 Brak zdjęcia
+                    </div>
+                `}
+            </div>
+            
+            <p><strong>📊 Status:</strong> 
+                <span class="status-badge status-${list.status}">${list.status}</span>
+            </p>
+            <div class="list-actions">
+                <button onclick="cancelReservation('${list.numer_listu}')" class="btn btn-danger">
+                    ❌ Anuluj rezerwację
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Funkcja do pokazywania/ukrywania zdjęć
+function togglePhoto(listNumber) {
+    const button = document.getElementById(`btn-${listNumber}`);
+    const image = document.getElementById(`img-${listNumber}`);
+    
+    if (image.style.display === 'none' || image.style.display === '') {
+        // Pokaż zdjęcie
+        image.style.display = 'block';
+        button.textContent = '🙈 Ukryj zdjęcie';
+        button.classList.remove('show-photo-btn');
+        button.classList.add('hide-photo-btn');
+        
+        // Dodaj przycisk do powiększenia jeśli nie istnieje
+        if (!button.nextElementSibling || !button.nextElementSibling.classList.contains('view-full-btn')) {
+            const viewFullBtn = document.createElement('button');
+            viewFullBtn.textContent = '🔍 Powiększ';
+            viewFullBtn.className = 'btn btn-small btn-info view-full-btn';
+            viewFullBtn.style.marginLeft = '10px';
+            viewFullBtn.onclick = () => window.open(image.src, '_blank');
+            button.parentNode.insertBefore(viewFullBtn, button.nextElementSibling);
+        }
+    } else {
+        // Ukryj zdjęcie
+        image.style.display = 'none';
+        button.textContent = '👁️ Pokaż zdjęcie';
+        button.classList.remove('hide-photo-btn');
+        button.classList.add('show-photo-btn');
+        
+        // Usuń przycisk powiększenia
+        const viewFullBtn = button.nextElementSibling;
+        if (viewFullBtn && viewFullBtn.classList.contains('view-full-btn')) {
+            viewFullBtn.remove();
+        }
+    }
+}
 
 // Rezerwacja listu przez użytkownika
 async function reserveList(listNumber, userId) {
@@ -245,10 +472,9 @@ async function reserveList(listNumber, userId) {
             .eq('status', 'dostępny');
 
         if (error) {
-            alert('Błąd rezerwacji: ' + error.message);
+            alert('❌ Błąd rezerwacji: ' + error.message);
         } else if (data && data.length > 0) {
-            alert('List został zarezerwowany!');
-            // Odśwież widok
+            alert('✅ List został zarezerwowany!');
             const user = JSON.parse(localStorage.getItem('user'));
             if (user.admin) {
                 await loadAllLists();
@@ -256,14 +482,14 @@ async function reserveList(listNumber, userId) {
                 await loadUserLists(user.id);
             }
         } else {
-            alert('Ten list jest już zarezerwowany!');
+            alert('⚠️ Ten list jest już zarezerwowany!');
         }
     } catch (err) {
-        alert('Błąd: ' + err.message);
+        alert('❌ Błąd: ' + err.message);
     }
 }
 
-// Rezerwacja przez admina (jako null)
+// Rezerwacja przez admina
 async function reserveAsAdmin(listNumber) {
     try {
         const { data, error } = await supabase
@@ -276,21 +502,21 @@ async function reserveAsAdmin(listNumber) {
             .eq('status', 'dostępny');
 
         if (error) {
-            alert('Błąd rezerwacji: ' + error.message);
+            alert('❌ Błąd rezerwacji: ' + error.message);
         } else if (data && data.length > 0) {
-            alert('List został zarezerwowany przez administratora!');
+            alert('✅ List został zarezerwowany przez administratora!');
             await loadAllLists();
         } else {
-            alert('Ten list jest już zarezerwowany!');
+            alert('⚠️ Ten list jest już zarezerwowany!');
         }
     } catch (err) {
-        alert('Błąd: ' + err.message);
+        alert('❌ Błąd: ' + err.message);
     }
 }
 
 // Anulowanie rezerwacji
 async function cancelReservation(listNumber) {
-    if (!confirm('Czy na pewno chcesz anulować rezerwację tego listu?')) {
+    if (!confirm('❓ Czy na pewno chcesz anulować rezerwację tego listu?')) {
         return;
     }
 
@@ -304,10 +530,9 @@ async function cancelReservation(listNumber) {
             .eq('numer_listu', listNumber);
 
         if (error) {
-            alert('Błąd anulowania: ' + error.message);
+            alert('❌ Błąd anulowania: ' + error.message);
         } else {
-            alert('Rezerwacja anulowana!');
-            // Odśwież widok
+            alert('✅ Rezerwacja anulowana!');
             const user = JSON.parse(localStorage.getItem('user'));
             if (user.admin) {
                 await loadAllLists();
@@ -316,7 +541,7 @@ async function cancelReservation(listNumber) {
             }
         }
     } catch (err) {
-        alert('Błąd: ' + err.message);
+        alert('❌ Błąd: ' + err.message);
     }
 }
 
@@ -324,11 +549,41 @@ async function cancelReservation(listNumber) {
 async function createSampleLists() {
     try {
         const sampleLists = [
-            { numer_listu: 'L001', imie_wiek: 'Ania, 5 lat', opis_prezentu: 'Marzy o lalce Barbie i książkach z bajkami', osoba_rezerwujaca: null, status: 'dostępny' },
-            { numer_listu: 'L002', imie_wiek: 'Kacper, 7 lat', opis_prezentu: 'Chciałby dostać klocki Lego i piłkę nożną', osoba_rezerwujaca: null, status: 'dostępny' },
-            { numer_listu: 'L003', imie_wiek: 'Zuzia, 4 lata', opis_prezentu: 'Marzy o zestawie małego lekarza i puzzlach', osoba_rezerwujaca: null, status: 'dostępny' },
-            { numer_listu: 'L004', imie_wiek: 'Janek, 8 lat', opis_prezentu: 'Chce zestaw science i grę planszową', osoba_rezerwujaca: null, status: 'dostępny' },
-            { numer_listu: 'L005', imie_wiek: 'Ola, 6 lat', opis_prezentu: 'Marzy o rowerku i kredkach', osoba_rezerwujaca: null, status: 'dostępny' }
+            { 
+                numer_listu: 'L001', 
+                imie_wiek: 'Ania, 5 lat', 
+                opis_prezentu: 'Marzy o lalce Barbie i książkach z bajkami', 
+                osoba_rezerwujaca: null, 
+                status: 'dostępny' 
+            },
+            { 
+                numer_listu: 'L002', 
+                imie_wiek: 'Kacper, 7 lat', 
+                opis_prezentu: 'Chciałby dostać klocki Lego i piłkę nożną', 
+                osoba_rezerwujaca: null, 
+                status: 'dostępny' 
+            },
+            { 
+                numer_listu: 'L003', 
+                imie_wiek: 'Zuzia, 4 lata', 
+                opis_prezentu: 'Marzy o zestawie małego lekarza i puzzlach', 
+                osoba_rezerwujaca: null, 
+                status: 'dostępny' 
+            },
+            { 
+                numer_listu: 'L004', 
+                imie_wiek: 'Janek, 8 lat', 
+                opis_prezentu: 'Chce zestaw science i grę planszową', 
+                osoba_rezerwujaca: null, 
+                status: 'dostępny' 
+            },
+            { 
+                numer_listu: 'L005', 
+                imie_wiek: 'Ola, 6 lat', 
+                opis_prezentu: 'Marzy o rowerku i kredkach', 
+                osoba_rezerwujaca: null, 
+                status: 'dostępny' 
+            }
         ];
 
         for (const list of sampleLists) {
@@ -341,11 +596,11 @@ async function createSampleLists() {
             }
         }
 
-        alert('Przykładowe listy zostały utworzone!');
+        alert('✅ Przykładowe listy zostały utworzone!');
         await loadAllLists();
         
     } catch (err) {
-        alert('Błąd tworzenia listów: ' + err.message);
+        alert('❌ Błąd tworzenia listów: ' + err.message);
         console.error(err);
     }
 }
@@ -363,41 +618,54 @@ function showAddListForm() {
     content.innerHTML = `
         <div class="add-list-form fade-in">
             <div class="form-header">
-                <h3> Dodaj nowy list</h3>
+                <h3>📝 Dodaj nowy list</h3>
                 <button onclick="showAllLists()" class="btn btn-secondary">← Wróć do list</button>
             </div>
             
             <form id="add-list-form" onsubmit="handleAddList(event)">
                 <div class="form-group">
-                    <label for="list-number">Numer listu *</label>
+                    <label for="list-number">🔢 Numer listu *</label>
                     <input type="text" id="list-number" class="input" required 
-                           placeholder="np. B01, C03">
+                           placeholder="np. L001, L002, L003...">
+                    <small style="color: #666; font-size: 0.9rem;">Numer musi być unikalny</small>
                 </div>
                 
                 <div class="form-group">
-                    <label for="child-name">Dziecko (imię i wiek) *</label>
+                    <label for="child-name">👶 Dziecko (imię i wiek) *</label>
                     <input type="text" id="child-name" class="input" required 
-                           placeholder="np. Pani Halina, 67 lat">
+                           placeholder="np. Ania, 5 lat">
                 </div>
                 
                 <div class="form-group">
-                    <label for="gift-description">Opis prezentu *</label>
+                    <label for="gift-description">🎁 Opis prezentu *</label>
                     <textarea id="gift-description" class="input textarea" required 
-                              placeholder="Skarpetki rozmiar 38 ...."></textarea>
+                              placeholder="Opisz czego dziecko potrzebuje lub o czym marzy...&#10;np. 'Marzy o lalce Barbie i książkach z bajkami'&#10;np. 'Potrzebuje buty zimowe rozmiar 28'"
+                              rows="4"></textarea>
                 </div>
                 
                 <div class="form-group">
-                    <label for="list-photo">Zdjęcie listu</label>
+                    <label for="list-photo">📸 Zdjęcie listu (opcjonalnie)</label>
                     <input type="file" id="list-photo" class="input file-input" 
                            accept="image/*" onchange="previewPhoto(event)">
-                    <div id="photo-preview-container"></div>
+                    <small style="color: #666; font-size: 0.9rem;">Dozwolone formaty: JPG, PNG, GIF (max 5MB)</small>
+                    <div id="photo-preview-container" style="margin-top: 15px;"></div>
                 </div>
                 
                 <div class="form-actions">
-                    <button type="button" onclick="showAllLists()" class="btn btn-secondary">Anuluj</button>
-                    <button type="submit" class="btn btn-success">Dodaj list</button>
+                    <button type="button" onclick="showAllLists()" class="btn btn-secondary">❌ Anuluj</button>
+                    <button type="submit" class="btn btn-success">✅ Dodaj list</button>
                 </div>
             </form>
+            
+            <div class="form-info">
+                <h4>💡 Wskazówki:</h4>
+                <ul>
+                    <li>Pola oznaczone * są wymagane</li>
+                    <li>Numer listu powinien być unikalny w systemie</li>
+                    <li>Opis powinien być konkretny, aby darczyńca wiedział co kupić</li>
+                    <li>Zdjęcie listu pomaga w identyfikacji dziecka</li>
+                </ul>
+            </div>
         </div>
     `;
 }
@@ -408,12 +676,25 @@ function previewPhoto(event) {
     const previewContainer = document.getElementById('photo-preview-container');
     
     if (file) {
+        // Sprawdź rozmiar pliku (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('❌ Plik jest za duży! Maksymalny rozmiar to 5MB.');
+            event.target.value = '';
+            return;
+        }
+        
         const reader = new FileReader();
         reader.onload = function(e) {
             previewContainer.innerHTML = `
-                <div class="photo-preview">
-                    <img src="${e.target.result}" class="list-photo" alt="Podgląd zdjęcia">
-                    <button type="button" onclick="removePhotoPreview()" class="remove-photo">×</button>
+                <div style="text-align: center;">
+                    <p style="color: #4caf50; font-weight: 600; margin-bottom: 10px;">📸 Podgląd zdjęcia:</p>
+                    <img src="${e.target.result}" 
+                         style="max-width: 300px; max-height: 300px; border-radius: 10px; border: 3px solid #4caf50; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"
+                         alt="Podgląd zdjęcia">
+                    <br>
+                    <button type="button" onclick="removePhotoPreview()" class="btn btn-danger btn-small" style="margin-top: 10px;">
+                        🗑️ Usuń zdjęcie
+                    </button>
                 </div>
             `;
         };
@@ -429,7 +710,6 @@ function removePhotoPreview() {
 
 async function handleAddList(event) {
     event.preventDefault();
-    console.log(' Rozpoczynam dodawanie listu...');
     
     const listData = {
         numer_listu: document.getElementById('list-number').value.trim(),
@@ -444,52 +724,51 @@ async function handleAddList(event) {
     
     // Walidacja
     if (!listData.numer_listu || !listData.imie_wiek || !listData.opis_prezentu) {
-        alert('Proszę wypełnić wszystkie wymagane pola!');
+        alert('❌ Proszę wypełnić wszystkie wymagane pola!');
         return;
     }
     
     try {
-        console.log('🔍 Sprawdzam czy numer listu istnieje...');
-        
+        // Sprawdź czy numer listu istnieje
         const { data: existingList, error: checkError } = await supabase
             .from('listy')
             .select('numer_listu')
             .eq('numer_listu', listData.numer_listu)
             .single();
             
-        console.log('Wynik sprawdzenia:', existingList, checkError);
-            
         if (existingList) {
-            alert('List z tym numerem już istnieje! Proszę użyć innego numeru.');
+            alert('❌ List z tym numerem już istnieje! Proszę użyć innego numeru.');
             return;
         }
         
         // Upload zdjęcia jeśli zostało dodane
         const photoFile = document.getElementById('list-photo').files[0];
         if (photoFile) {
-            console.log('📸 Rozpoczynam upload zdjęcia...');
-            
-            const fileExt = photoFile.name.split('.').pop();
-            const fileName = `${listData.numer_listu}_${Date.now()}.${fileExt}`;
-            const filePath = `list-photos/${fileName}`;
-            
-            const { data: uploadData, error: uploadError } = await supabase.storage
-                .from('list-photos')
-                .upload(filePath, photoFile);
+            try {
+                console.log('📸 Rozpoczynam upload zdjęcia...');
                 
-            if (uploadError) {
-                console.error(' Błąd uploadu zdjęcia:', uploadError);
-                alert('Błąd podczas uploadu zdjęcia: ' + uploadError.message);
-                return;
+                const fileExt = photoFile.name.split('.').pop();
+                const fileName = `${listData.numer_listu}_${Date.now()}.${fileExt}`;
+                const filePath = `list-photos/${fileName}`;
+                
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('list-photos')
+                    .upload(filePath, photoFile);
+                    
+                if (uploadError) throw uploadError;
+                
+                // Pobierz publiczny URL zdjęcia
+                const { data: urlData } = supabase.storage
+                    .from('list-photos')
+                    .getPublicUrl(filePath);
+                    
+                listData.zdjecie_url = urlData.publicUrl;
+                console.log('✅ Zdjęcie uploaded:', listData.zdjecie_url);
+            } catch (uploadError) {
+                console.error('❌ Błąd uploadu zdjęcia:', uploadError);
+                alert('⚠️ Uwaga: Zdjęcie nie zostało zapisane. ' + uploadError.message);
+                // Kontynuuj bez zdjęcia
             }
-            
-            // Pobierz publiczny URL zdjęcia
-            const { data: urlData } = supabase.storage
-                .from('list-photos')
-                .getPublicUrl(filePath);
-                
-            listData.zdjecie_url = urlData.publicUrl;
-            console.log(' Zdjęcie uploaded:', listData.zdjecie_url);
         }
         
         console.log('💾 Dodaję list do bazy...');
@@ -502,17 +781,17 @@ async function handleAddList(event) {
             
         if (error) {
             console.error('❌ Błąd Supabase:', error);
-            alert(' Błąd podczas dodawania listu: ' + error.message);
+            alert('❌ Błąd podczas dodawania listu: ' + error.message);
             return;
         }
         
-        console.log(' List dodany pomyślnie!');
-        alert(' List został pomyślnie dodany!');
+        console.log('✅ List dodany pomyślnie!');
+        alert('✅ List został pomyślnie dodany!' + (listData.zdjecie_url ? ' Zdjęcie zostało zapisane.' : ''));
         showAllLists();
         
     } catch (err) {
-        console.error(' Błąd catch:', err);
-        alert(' Błąd podczas dodawania listu: ' + err.message);
+        console.error('❌ Błąd catch:', err);
+        alert('❌ Błąd podczas dodawania listu: ' + err.message);
     }
 }
 
@@ -521,24 +800,31 @@ function showBulkAddForm() {
     content.innerHTML = `
         <div class="add-list-form">
             <div class="form-header">
-                <h3> Masowe dodawanie listów</h3>
+                <h3>📦 Masowe dodawanie listów</h3>
                 <button onclick="showAllLists()" class="btn btn-secondary">← Wróć</button>
             </div>
             
-            <p><strong>Format:</strong> każdy list w nowej linii, pola oddzielone przecinkami:<br>
-            <code>NumerListu,Imię i wiek,Opis prezentu</code></p>
+            <div class="form-info">
+                <h4>📋 Instrukcja:</h4>
+                <p>Wklej dane listów w formacie CSV. Każdy list w nowej linii, pola oddzielone przecinkami:</p>
+                <pre>NumerListu,Imię i wiek,Opis prezentu</pre>
+                <p><strong>Przykład:</strong></p>
+                <pre>L006,Maciek 6 lat,Klocki Lego i książki o dinozaurach
+L007,Karolina 4 lat,Lalka i wózek dla lalki
+L008,Piotr 7 lat,Plecak szkolny i piórnik</pre>
+            </div>
             
             <form id="bulk-add-form" onsubmit="handleBulkAdd(event)">
                 <div class="form-group">
-                    <label for="bulk-data">Dane listów *</label>
+                    <label for="bulk-data">📄 Dane listów *</label>
                     <textarea id="bulk-data" class="input textarea" required 
-                              placeholder="L006,Maciek 6 lat,Klocki Lego&#10;L007,Karolina 4 lat,Lalka"
-                              rows="10"></textarea>
+                              placeholder="Wklej tutaj dane w formacie CSV...&#10;L006,Maciek 6 lat,Klocki Lego&#10;L007,Karolina 4 lat,Lalka&#10;L008,Piotr 7 lat,Plecak"
+                              rows="12"></textarea>
                 </div>
                 
                 <div class="form-actions">
-                    <button type="button" onclick="showAllLists()" class="btn btn-secondary">Anuluj</button>
-                    <button type="submit" class="btn btn-success">Dodaj listy</button>
+                    <button type="button" onclick="showAllLists()" class="btn btn-secondary">❌ Anuluj</button>
+                    <button type="submit" class="btn btn-success">✅ Dodaj listy</button>
                 </div>
             </form>
         </div>
@@ -567,7 +853,7 @@ async function handleBulkAdd(event) {
     }
     
     if (lists.length === 0) {
-        alert('Nie znaleziono poprawnych danych!');
+        alert('❌ Nie znaleziono poprawnych danych! Sprawdź format.');
         return;
     }
     
@@ -577,26 +863,16 @@ async function handleBulkAdd(event) {
             .insert(lists);
             
         if (error) {
-            alert('Błąd: ' + error.message);
+            alert('❌ Błąd: ' + error.message);
             return;
         }
         
-        alert(`✅ Dodano ${lists.length} listów!`);
+        alert(`✅ Pomyślnie dodano ${lists.length} listów!`);
         showAllLists();
         
     } catch (err) {
-        alert('Błąd: ' + err.message);
+        alert('❌ Błąd: ' + err.message);
     }
-}
-
-// Podgląd zdjęcia w pełnym rozmiarze
-function viewPhoto(photoUrl) {
-    window.open(photoUrl, '_blank');
-}
-
-// Edycja listu
-function editList(listNumber) {
-    alert('Funkcja edycji listu będzie dostępna wkrótce!');
 }
 
 // Obsługa Enter w formularzach
@@ -629,368 +905,24 @@ function checkLocalStorage() {
     }
 }
 
-// Zmodyfikowana funkcja wyświetlania wszystkich listów (dla admina)
-function displayAllLists(lists) {
-    const content = document.getElementById('admin-content');
-    
-    if (!lists || lists.length === 0) {
-        content.innerHTML = '<p>Brak listów w systemie.</p>';
+// Funkcja do czyszczenia wszystkich danych (tylko dla developera)
+async function clearAllData() {
+    if (!confirm('🚨 UWAGA! Czy na pewno chcesz usunąć WSZYSTKIE dane? Tej operacji nie można cofnąć!')) {
         return;
     }
-
-    const total = lists.length;
-    const available = lists.filter(l => l.status === 'dostępny').length;
-    const reserved = lists.filter(l => l.status === 'zarezerwowany').length;
-
-    content.innerHTML = `
-        <div class="admin-stats">
-            <div class="stat-card">
-                <span class="stat-number">${total}</span>
-                <span class="stat-label">Wszystkie listy</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-number">${available}</span>
-                <span class="stat-label">Dostępne</span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-number">${reserved}</span>
-                <span class="stat-label">Zarezerwowane</span>
-            </div>
-        </div>
-        
-        <h3>Wszystkie listy (${lists.length})</h3>
-        <div class="lists-grid">
-            ${lists.map(list => `
-                <div class="list-card ${list.status}">
-                    <h4>List ${list.numer_listu}</h4>
-                    <p><strong>Dziecko:</strong> ${list.imie_wiek}</p>
-                    <p><strong>Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
-                    
-                    ${list.zdjecie_url ? `
-                        <div class="photo-container">
-                            <p class="photo-info">📷 List posiada zdjęcie</p>
-                            <button onclick="togglePhoto('photo-${list.numer_listu}')" class="show-photo-btn">
-                                Pokaż zdjęcie
-                            </button>
-                            <img id="photo-${list.numer_listu}" 
-                                 src="${list.zdjecie_url}" 
-                                 alt="Zdjęcie listu ${list.numer_listu}" 
-                                 class="hidden-photo"
-                                 onerror="this.style.display='none'; document.querySelector('#photo-btn-${list.numer_listu}').style.display='none';">
-                        </div>
-                    ` : `
-                        <div class="photo-placeholder">
-                            📄 Brak zdjęcia
-                        </div>
-                    `}
-                    
-                    <p><strong>Status:</strong> 
-                        <span class="status-badge status-${list.status}">${list.status}</span>
-                    </p>
-                    ${list.osoba_rezerwujaca ? `<p><strong>Zarezerwowany przez:</strong> ${list.user_email || 'użytkownika'}</p>` : ''}
-                    
-                    <div class="list-actions">
-                        ${list.status === 'dostępny' ? 
-                            `<button onclick="reserveAsAdmin('${list.numer_listu}')" class="btn btn-success btn-small">Zarezerwuj</button>` :
-                            `<button onclick="cancelReservation('${list.numer_listu}')" class="btn btn-danger btn-small">Anuluj rezerwację</button>`
-                        }
-                    </div>
-                </div>
-            `).join('')}
-        </div>
-    `;
-}
-
-// Zmodyfikowana funkcja wyświetlania dostępnych listów (dla użytkownika)
-function displayAvailableLists(lists) {
-    const container = document.getElementById('available-lists');
-    const user = JSON.parse(localStorage.getItem('user'));
     
-    if (!lists || lists.length === 0) {
-        container.innerHTML = '<p>Brak dostępnych listów.</p>';
-        return;
-    }
-
-    container.innerHTML = lists.map(list => `
-        <div class="list-card available">
-            <h4>List ${list.numer_listu}</h4>
-            <p><strong>Dziecko:</strong> ${list.imie_wiek}</p>
-            <p><strong>Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
-            
-            ${list.zdjecie_url ? `
-                <div class="photo-container">
-                    <p class="photo-info">📷 List posiada zdjęcie</p>
-                    <button onclick="togglePhoto('photo-${list.numer_listu}')" class="show-photo-btn">
-                        Pokaż zdjęcie
-                    </button>
-                    <img id="photo-${list.numer_listu}" 
-                         src="${list.zdjecie_url}" 
-                         alt="Zdjęcie listu ${list.numer_listu}" 
-                         class="hidden-photo"
-                         onerror="this.style.display='none'; document.querySelector('#photo-btn-${list.numer_listu}').style.display='none';">
-                </div>
-            ` : `
-                <div class="photo-placeholder">
-                    📄 Brak zdjęcia
-                </div>
-            `}
-            
-            <div class="list-actions">
-                <button onclick="reserveList('${list.numer_listu}', ${user.id})" class="btn btn-success">
-                    Zarezerwuj ten list
-                </button>
-            </div>
-        </div>
-    `).join('');
-}
-
-// Zmodyfikowana funkcja wyświetlania listów użytkownika
-function displayMyLists(lists) {
-    const container = document.getElementById('my-lists');
-    
-    if (!lists || lists.length === 0) {
-        container.innerHTML = '<p>Nie masz zarezerwowanych listów.</p>';
-        return;
-    }
-
-    container.innerHTML = lists.map(list => `
-        <div class="list-card reserved">
-            <h4>List ${list.numer_listu}</h4>
-            <p><strong>Dziecko:</strong> ${list.imie_wiek}</p>
-            <p><strong>Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
-            
-            ${list.zdjecie_url ? `
-                <div class="photo-container">
-                    <p class="photo-info">📷 List posiada zdjęcie</p>
-                    <button onclick="togglePhoto('photo-${list.numer_listu}')" class="show-photo-btn">
-                        Pokaż zdjęcie
-                    </button>
-                    <img id="photo-${list.numer_listu}" 
-                         src="${list.zdjecie_url}" 
-                         alt="Zdjęcie listu ${list.numer_listu}" 
-                         class="hidden-photo"
-                         onerror="this.style.display='none'; document.querySelector('#photo-btn-${list.numer_listu}').style.display='none';">
-                </div>
-            ` : `
-                <div class="photo-placeholder">
-                    📄 Brak zdjęcia
-                </div>
-            `}
-            
-            <p><strong>Status:</strong> 
-                <span class="status-badge status-${list.status}">${list.status}</span>
-            </p>
-            <div class="list-actions">
-                <button onclick="cancelReservation('${list.numer_listu}')" class="btn btn-danger">
-                    Anuluj rezerwację
-                </button>
-            </div>
-        </div>
-    `).join('');
-}
-
-// Funkcja do pokazywania/ukrywania zdjęć
-function togglePhoto(photoId) {
-    const photo = document.getElementById(photoId);
-    const button = photo.previousElementSibling; // Przycisk przed zdjęciem
-    
-    if (photo.classList.contains('hidden-photo')) {
-        // Pokaż zdjęcie
-        photo.classList.remove('hidden-photo');
-        photo.classList.add('visible-photo');
-        button.textContent = 'Ukryj zdjęcie';
-        button.classList.remove('show-photo-btn');
-        button.classList.add('hide-photo-btn');
-    } else {
-        // Ukryj zdjęcie
-        photo.classList.remove('visible-photo');
-        photo.classList.add('hidden-photo');
-        button.textContent = 'Pokaż zdjęcie';
-        button.classList.remove('hide-photo-btn');
-        button.classList.add('show-photo-btn');
-    }
-}
-
-// Funkcja do podglądu zdjęcia w pełnym rozmiarze
-function viewFullPhoto(photoUrl) {
-    window.open(photoUrl, '_blank', 'width=800,height=600');
-}
-
-// Alternatywna wersja z lepszym zarządzaniem przyciskami
-function togglePhotoAdvanced(photoId, button) {
-    const photo = document.getElementById(photoId);
-    
-    if (photo.style.display === 'none' || !photo.style.display) {
-        // Pokaż zdjęcie
-        photo.style.display = 'block';
-        button.innerHTML = '👁️ Ukryj zdjęcie';
-        button.classList.add('active');
-        
-        // Dodaj przycisk do powiększenia
-        if (!button.nextElementSibling || !button.nextElementSibling.classList.contains('view-full-btn')) {
-            const viewFullBtn = document.createElement('button');
-            viewFullBtn.textContent = '🔍 Powiększ';
-            viewFullBtn.className = 'btn btn-small btn-info';
-            viewFullBtn.onclick = () => viewFullPhoto(photo.src);
-            viewFullBtn.style.marginLeft = '5px';
-            button.parentNode.insertBefore(viewFullBtn, button.nextElementSibling);
-        }
-    } else {
-        // Ukryj zdjęcie
-        photo.style.display = 'none';
-        button.innerHTML = '👁️ Pokaż zdjęcie';
-        button.classList.remove('active');
-        
-        // Usuń przycisk powiększenia jeśli istnieje
-        const viewFullBtn = button.nextElementSibling;
-        if (viewFullBtn && viewFullBtn.classList.contains('btn-info')) {
-            viewFullBtn.remove();
-        }
-    }
-}
-
-// Zmodyfikowana wersja wyświetlania z zaawansowaną obsługą zdjęć
-function displayListsWithAdvancedPhotos(lists, containerId) {
-    const container = document.getElementById(containerId);
-    const user = JSON.parse(localStorage.getItem('user'));
-    
-    if (!lists || lists.length === 0) {
-        container.innerHTML = '<p>Brak listów do wyświetlenia.</p>';
-        return;
-    }
-
-    container.innerHTML = lists.map(list => `
-        <div class="list-card ${list.status}">
-            <h4>List ${list.numer_listu}</h4>
-            <p><strong>Dziecko:</strong> ${list.imie_wiek}</p>
-            <p><strong>Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
-            
-            <div class="photo-container">
-                ${list.zdjecie_url ? `
-                    <button onclick="togglePhotoAdvanced('photo-${list.numer_listu}', this)" 
-                            class="show-photo-btn" id="photo-btn-${list.numer_listu}">
-                        👁️ Pokaż zdjęcie
-                    </button>
-                    <img id="photo-${list.numer_listu}" 
-                         src="${list.zdjecie_url}" 
-                         alt="Zdjęcie listu ${list.numer_listu}" 
-                         style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; margin: 10px 0;"
-                         onerror="this.style.display='none'; document.getElementById('photo-btn-${list.numer_listu}').style.display='none';">
-                ` : `
-                    <div class="photo-placeholder">
-                        📄 Brak zdjęcia
-                    </div>
-                `}
-            </div>
-            
-            ${list.status ? `<p><strong>Status:</strong> <span class="status-badge status-${list.status}">${list.status}</span></p>` : ''}
-            
-            <div class="list-actions">
-                ${containerId === 'available-lists' ? `
-                    <button onclick="reserveList('${list.numer_listu}', ${user.id})" class="btn btn-success">
-                        Zarezerwuj ten list
-                    </button>
-                ` : containerId === 'my-lists' ? `
-                    <button onclick="cancelReservation('${list.numer_listu}')" class="btn btn-danger">
-                        Anuluj rezerwację
-                    </button>
-                ` : `
-                    ${list.status === 'dostępny' ? 
-                        `<button onclick="reserveAsAdmin('${list.numer_listu}')" class="btn btn-success btn-small">Zarezerwuj</button>` :
-                        `<button onclick="cancelReservation('${list.numer_listu}')" class="btn btn-danger btn-small">Anuluj rezerwację</button>`
-                    }
-                `}
-            </div>
-        </div>
-    `).join('');
-}
-
-// Uaktualnij funkcje ładowania listów aby używały zaawansowanej wersji
-async function loadAllLists() {
     try {
-        const { data: lists, error } = await supabase
+        const { error } = await supabase
             .from('listy')
-            .select('*')
-            .order('numer_listu');
-
-        if (error) throw error;
-
-        // Użyj zaawansowanej wersji wyświetlania
-        const content = document.getElementById('admin-content');
-        
-        if (!lists || lists.length === 0) {
-            content.innerHTML = '<p>Brak listów w systemie.</p>';
-            return;
-        }
-
-        const total = lists.length;
-        const available = lists.filter(l => l.status === 'dostępny').length;
-        const reserved = lists.filter(l => l.status === 'zarezerwowany').length;
-
-        content.innerHTML = `
-            <div class="admin-stats">
-                <div class="stat-card">
-                    <span class="stat-number">${total}</span>
-                    <span class="stat-label">Wszystkie listy</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-number">${available}</span>
-                    <span class="stat-label">Dostępne</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-number">${reserved}</span>
-                    <span class="stat-label">Zarezerwowane</span>
-                </div>
-            </div>
+            .delete()
+            .neq('numer_listu', '');
             
-            <h3>Wszystkie listy (${lists.length})</h3>
-            <div class="lists-grid">
-                ${lists.map(list => `
-                    <div class="list-card ${list.status}">
-                        <h4>List ${list.numer_listu}</h4>
-                        <p><strong>Dziecko:</strong> ${list.imie_wiek}</p>
-                        <p><strong>Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
-                        
-                        <div class="photo-container">
-                            ${list.zdjecie_url ? `
-                                <button onclick="togglePhotoAdvanced('photo-${list.numer_listu}', this)" 
-                                        class="show-photo-btn" id="photo-btn-${list.numer_listu}">
-                                    👁️ Pokaż zdjęcie
-                                </button>
-                                <img id="photo-${list.numer_listu}" 
-                                     src="${list.zdjecie_url}" 
-                                     alt="Zdjęcie listu ${list.numer_listu}" 
-                                     style="display: none; max-width: 100%; max-height: 300px; border-radius: 8px; margin: 10px 0; border: 2px solid #e9ecef;"
-                                     onerror="this.style.display='none'; document.getElementById('photo-btn-${list.numer_listu}').style.display='none';">
-                            ` : `
-                                <div class="photo-placeholder">
-                                    📄 Brak zdjęcia
-                                </div>
-                            `}
-                        </div>
-                        
-                        <p><strong>Status:</strong> 
-                            <span class="status-badge status-${list.status}">${list.status}</span>
-                        </p>
-                        
-                        <div class="list-actions">
-                            ${list.status === 'dostępny' ? 
-                                `<button onclick="reserveAsAdmin('${list.numer_listu}')" class="btn btn-success btn-small">Zarezerwuj</button>` :
-                                `<button onclick="cancelReservation('${list.numer_listu}')" class="btn btn-danger btn-small">Anuluj rezerwację</button>`
-                            }
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-
+        if (error) throw error;
+        
+        alert('✅ Wszystkie dane zostały usunięte!');
+        showAllLists();
+        
     } catch (err) {
-        console.error('Błąd ładowania list:', err);
-        document.getElementById('admin-content').innerHTML = `
-            <div class="error-message">
-                <h3>❌ Błąd ładowania list</h3>
-                <p>${err.message}</p>
-            </div>
-        `;
+        alert('❌ Błąd usuwania danych: ' + err.message);
     }
 }
