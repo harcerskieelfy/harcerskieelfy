@@ -432,7 +432,7 @@ function displayAllLists(lists) {
                         <span class="status-badge status-${list.status}">${list.status}</span>
                     </p>
                     
-                    ${list.osoba_rezerwujaca ? `<p><strong>Zarezerwowany przez:</strong> ${list.osoba_rezerwujaca === user.id ? 'Ciebie' : 'innego użytkownika'}</p>` : ''}
+                    ${list.osoba_rezerwujaca ? `<p><strong>Zarezerwowany przez:</strong> ${list.osoba_rezerwujaca}</p>` : ''}
                     
                     <div class="list-actions">
                         ${list.status === 'dostępny' ? 
