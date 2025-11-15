@@ -344,30 +344,30 @@ async function loadAllLists() {
 }
 
 // Załaduj listy dla użytkownika
-//async function loadUserLists(userId) {
-    //try {
-        // Listy dostępne
-        //const { data: availableLists, error: error1 } = await supabase
-            //.from('listy')
-            //.select('*')
-            //.eq('status', 'dostępny')
-            //.order('numer_listu');
+async function loadUserLists(userId) {
+    try {
+        //Listy dostępne
+        const { data: availableLists, error: error1 } = await supabase
+            .from('listy')
+            .select('*')
+            .eq('status', 'dostępny')
+            .order('numer_listu');
 
         // Listy zarezerwowane przez użytkownika
-        //const { data: myLists, error: error2 } = await supabase
-          //  .from('listy')
-           // .select('*')
-            //.eq('osoba_rezerwujaca', userId)
-            //.order('numer_listu');
+        const { data: myLists, error: error2 } = await supabase
+            .from('listy')
+            .select('*')
+            .eq('osoba_rezerwujaca', userId)
+            .order('numer_listu');
 
-        //if (!error1 && !error2) {
-          //  displayAvailableLists(availableLists || []);
-            //displayMyLists(myLists || []);
-        //}
-    //} catch (err) {
-      //  console.error('Błąd:', err);
-    //}
-//}
+        if (!error1 && !error2) {
+           displayAvailableLists(availableLists || []);
+            displayMyLists(myLists || []);
+        }
+    } catch (err) {
+        console.error('Błąd:', err);
+    }
+}
 
 // Wyświetl wszystkie listy (dla admina)
 function displayAllLists(lists) {
