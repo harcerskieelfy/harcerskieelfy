@@ -2,8 +2,6 @@ const SUPABASE_URL = 'https://ubkzwrgkccxvyaiagudg.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVia3p3cmdrY2N4dnlhaWFndWRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzMjUxNTYsImV4cCI6MjA3NTkwMTE1Nn0.22DTU-GTxzPEHmpbXkzoUda87S36Hi8QFu_GrG-Zx0Y';
 
 
-
-
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Sprawdź czy użytkownik jest już zalogowany przy ładowaniu strony
@@ -274,12 +272,27 @@ function displayAdminReservedLists(lists) {
         return;
     }
 
+    // Wyodrębnij unikalne litery
+    const letters = [...new Set(lists.map(list => {
+        const match = list.numer_listu.match(/^([A-M])/i);
+        return match ? match[1].toUpperCase() : 'ALL';
+    }))].sort();
+
     content.innerHTML = `
         <div class="user-section">
             <h3>Twoje zarezerwowane listy (${lists.length})</h3>
-            <div class="lists-grid">
+            <div style="margin-bottom: 1rem;">
+                <label for="admin-my-lists-filter" style="font-weight: 600; margin-right: 10px;">Filtruj według domu:</label>
+                <select id="admin-my-lists-filter" onchange="filterAdminMyLists()" class="input" style="width: auto;">
+                    <option value="ALL">Wszystkie domy</option>
+                    ${letters.map(letter => `
+                        <option value="${letter}">Dom ${letter}</option>
+                    `).join('')}
+                </select>
+            </div>
+            <div class="lists-grid" id="admin-my-lists-grid">
                 ${lists.map(list => `
-                    <div class="list-card reserved">
+                    <div class="list-card reserved" data-letter="${getListLetter(list.numer_listu)}">
                         <h4>List ${list.numer_listu}</h4>
                         <p><strong>Senior:</strong> ${list.imie_wiek}</p>
                         <p><strong>Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
@@ -318,6 +331,22 @@ function displayAdminReservedLists(lists) {
             </div>
         </div>
     `;
+}
+
+// Funkcja filtrowania moich listów admina
+function filterAdminMyLists() {
+    const selectedLetter = document.getElementById('admin-my-lists-filter').value;
+    const listCards = document.querySelectorAll('#admin-my-lists-grid .list-card');
+    
+    listCards.forEach(card => {
+        const cardLetter = card.getAttribute('data-letter');
+        
+        if (selectedLetter === 'ALL' || cardLetter === selectedLetter) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
 }
 
 // Załaduj wszystkie listy (dla admina)
@@ -369,6 +398,12 @@ async function loadUserLists(userId) {
     }
 }
 
+// Funkcja pomocnicza do wyodrębniania litery z numeru listu
+function getListLetter(listNumber) {
+    const match = listNumber.match(/^([A-M])/i);
+    return match ? match[1].toUpperCase() : 'OTHER';
+}
+
 // Wyświetl wszystkie listy (dla admina)
 async function displayAllLists(lists) {
     const content = document.getElementById('admin-content');
@@ -379,20 +414,21 @@ async function displayAllLists(lists) {
         return;
     }
 
-    // Pobierz wszystkich użytkowników
-    let users = [];
+    // Pobierz wszystkich użytkowników z Supabase
+    let userMap = {};
     try {
-        const response = await fetch('/api/users'); // lub twoje endpoint do pobrania użytkowników
-        users = await response.json();
+        const { data: users, error } = await supabase
+            .from('uzytkownicy')
+            .select('id, mail');
+            
+        if (!error && users) {
+            users.forEach(user => {
+                userMap[user.id] = user.mail;
+            });
+        }
     } catch (error) {
         console.error('Błąd przy pobieraniu użytkowników:', error);
     }
-
-    // Stwórz mapę ID -> email
-    const userMap = {};
-    users.forEach(user => {
-        userMap[user.id] = user.email;
-    });
 
     // Dodaj emaile do list
     const listsWithEmails = lists.map(list => ({
@@ -403,6 +439,12 @@ async function displayAllLists(lists) {
     const total = listsWithEmails.length;
     const available = listsWithEmails.filter(l => l.status === 'dostępny').length;
     const reserved = listsWithEmails.filter(l => l.status === 'zarezerwowany').length;
+
+    // Wyodrębnij unikalne litery z numerów listów
+    const letters = [...new Set(listsWithEmails.map(list => {
+        const match = list.numer_listu.match(/^([A-M])/i);
+        return match ? match[1].toUpperCase() : 'ALL';
+    }))].sort();
 
     content.innerHTML = `
         <div class="admin-stats">
@@ -421,13 +463,21 @@ async function displayAllLists(lists) {
         </div>
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h3> Wszystkie listy (${listsWithEmails.length})</h3>
-            <button onclick="showMyReservedLists()" class="btn btn-info btn-small"> Moje rezerwacje</button>
+            <h3>Wszystkie listy (${listsWithEmails.length})</h3>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <select id="letter-filter" onchange="filterListsByLetter()" class="input" style="width: auto;">
+                    <option value="ALL">Wszystkie domy (A-M)</option>
+                    ${letters.map(letter => `
+                        <option value="${letter}">Dom ${letter}</option>
+                    `).join('')}
+                </select>
+                <button onclick="showMyReservedLists()" class="btn btn-info btn-small">Moje rezerwacje</button>
+            </div>
         </div>
         
-        <div class="lists-grid">
+        <div class="lists-grid" id="lists-grid-container">
             ${listsWithEmails.map(list => `
-                <div class="list-card ${list.status}">
+                <div class="list-card ${list.status}" data-letter="${getListLetter(list.numer_listu)}">
                     <h4>List ${list.numer_listu}</h4>
                     <p><strong> Senior:</strong> ${list.imie_wiek}</p>
                     <p><strong>Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
@@ -469,6 +519,21 @@ async function displayAllLists(lists) {
     `;
 }
 
+// Funkcja filtrowania listów według litery
+function filterListsByLetter() {
+    const selectedLetter = document.getElementById('letter-filter').value;
+    const listCards = document.querySelectorAll('#lists-grid-container .list-card');
+    
+    listCards.forEach(card => {
+        const cardLetter = card.getAttribute('data-letter');
+        
+        if (selectedLetter === 'ALL' || cardLetter === selectedLetter) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
 
 // Wyświetl dostępne listy (dla użytkownika)
 function displayAvailableLists(lists) {
@@ -480,36 +545,71 @@ function displayAvailableLists(lists) {
         return;
     }
 
-    container.innerHTML = lists.map(list => `
-        <div class="list-card available">
-            <h4>List ${list.numer_listu}</h4>
-            <p><strong>Senior:</strong> ${list.imie_wiek}</p>
-            <p><strong>Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
-            
-            <div class="photo-container">
-                ${list.zdjecie_url ? `
-                    <button onclick="togglePhoto('${list.numer_listu}')" class="show-photo-btn" id="btn-${list.numer_listu}">
-                        Pokaż zdjęcie
-                    </button>
-                    <img src="${list.zdjecie_url}" 
-                         alt="Zdjęcie listu ${list.numer_listu}" 
-                         style="display: none; max-width: 100%; max-height: 400px; border-radius: 10px; margin: 15px 0; border: 3px solid #4caf50; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"
-                         id="img-${list.numer_listu}"
-                         onerror="document.getElementById('btn-${list.numer_listu}').style.display='none';">
-                ` : `
-                    <div class="photo-placeholder">
-                        Brak zdjęcia
-                    </div>
-                `}
-            </div>
-            
-            <div class="list-actions">
-                <button onclick="reserveList('${list.numer_listu}', ${user.id})" class="btn btn-success">
-                    Zarezerwuj ten list
-                </button>
-            </div>
+    // Wyodrębnij unikalne litery
+    const letters = [...new Set(lists.map(list => {
+        const match = list.numer_listu.match(/^([A-M])/i);
+        return match ? match[1].toUpperCase() : 'ALL';
+    }))].sort();
+
+    container.innerHTML = `
+        <div style="margin-bottom: 1rem;">
+            <label for="user-letter-filter" style="font-weight: 600; margin-right: 10px;">Filtruj według domu:</label>
+            <select id="user-letter-filter" onchange="filterUserLists()" class="input" style="width: auto;">
+                <option value="ALL">Wszystkie domy</option>
+                ${letters.map(letter => `
+                    <option value="${letter}">Dom ${letter}</option>
+                `).join('')}
+            </select>
         </div>
-    `).join('');
+        <div class="lists-grid" id="user-lists-grid">
+            ${lists.map(list => `
+                <div class="list-card available" data-letter="${getListLetter(list.numer_listu)}">
+                    <h4>List ${list.numer_listu}</h4>
+                    <p><strong>Senior:</strong> ${list.imie_wiek}</p>
+                    <p><strong>Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
+                    
+                    <div class="photo-container">
+                        ${list.zdjecie_url ? `
+                            <button onclick="togglePhoto('${list.numer_listu}')" class="show-photo-btn" id="btn-${list.numer_listu}">
+                                Pokaż zdjęcie
+                            </button>
+                            <img src="${list.zdjecie_url}" 
+                                 alt="Zdjęcie listu ${list.numer_listu}" 
+                                 style="display: none; max-width: 100%; max-height: 400px; border-radius: 10px; margin: 15px 0; border: 3px solid #4caf50; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"
+                                 id="img-${list.numer_listu}"
+                                 onerror="document.getElementById('btn-${list.numer_listu}').style.display='none';">
+                        ` : `
+                            <div class="photo-placeholder">
+                                Brak zdjęcia
+                            </div>
+                        `}
+                    </div>
+                    
+                    <div class="list-actions">
+                        <button onclick="reserveList('${list.numer_listu}', ${user.id})" class="btn btn-success">
+                            Zarezerwuj ten list
+                        </button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+// Funkcja filtrowania dla użytkownika
+function filterUserLists() {
+    const selectedLetter = document.getElementById('user-letter-filter').value;
+    const listCards = document.querySelectorAll('#user-lists-grid .list-card');
+    
+    listCards.forEach(card => {
+        const cardLetter = card.getAttribute('data-letter');
+        
+        if (selectedLetter === 'ALL' || cardLetter === selectedLetter) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
 }
 
 // Wyświetl listy użytkownika
@@ -521,39 +621,74 @@ function displayMyLists(lists) {
         return;
     }
 
-    container.innerHTML = lists.map(list => `
-        <div class="list-card reserved">
-            <h4>List ${list.numer_listu}</h4>
-            <p><strong>Senior:</strong> ${list.imie_wiek}</p>
-            <p><strong>Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
-            
-            <div class="photo-container">
-                ${list.zdjecie_url ? `
-                    <button onclick="togglePhoto('${list.numer_listu}')" class="show-photo-btn" id="btn-${list.numer_listu}">
-                        Pokaż zdjęcie
-                    </button>
-                    <img src="${list.zdjecie_url}" 
-                         alt="Zdjęcie listu ${list.numer_listu}" 
-                         style="display: none; max-width: 100%; max-height: 400px; border-radius: 10px; margin: 15px 0; border: 3px solid #4caf50; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"
-                         id="img-${list.numer_listu}"
-                         onerror="document.getElementById('btn-${list.numer_listu}').style.display='none';">
-                ` : `
-                    <div class="photo-placeholder">
-                        Brak zdjęcia
-                    </div>
-                `}
-            </div>
-            
-            <p><strong>Status:</strong> 
-                <span class="status-badge status-${list.status}">${list.status}</span>
-            </p>
-            <div class="list-actions">
-                <button onclick="cancelReservation('${list.numer_listu}')" class="btn btn-danger">
-                    Anuluj rezerwację
-                </button>
-            </div>
+    // Wyodrębnij unikalne litery
+    const letters = [...new Set(lists.map(list => {
+        const match = list.numer_listu.match(/^([A-M])/i);
+        return match ? match[1].toUpperCase() : 'ALL';
+    }))].sort();
+
+    container.innerHTML = `
+        <div style="margin-bottom: 1rem;">
+            <label for="my-lists-filter" style="font-weight: 600; margin-right: 10px;">Filtruj według domu:</label>
+            <select id="my-lists-filter" onchange="filterMyLists()" class="input" style="width: auto;">
+                <option value="ALL">Wszystkie domy</option>
+                ${letters.map(letter => `
+                    <option value="${letter}">Dom ${letter}</option>
+                `).join('')}
+            </select>
         </div>
-    `).join('');
+        <div class="lists-grid" id="my-lists-grid">
+            ${lists.map(list => `
+                <div class="list-card reserved" data-letter="${getListLetter(list.numer_listu)}">
+                    <h4>List ${list.numer_listu}</h4>
+                    <p><strong>Senior:</strong> ${list.imie_wiek}</p>
+                    <p><strong>Opis prezentu:</strong> ${list.opis_prezentu || 'Brak opisu'}</p>
+                    
+                    <div class="photo-container">
+                        ${list.zdjecie_url ? `
+                            <button onclick="togglePhoto('${list.numer_listu}')" class="show-photo-btn" id="btn-${list.numer_listu}">
+                                Pokaż zdjęcie
+                            </button>
+                            <img src="${list.zdjecie_url}" 
+                                 alt="Zdjęcie listu ${list.numer_listu}" 
+                                 style="display: none; max-width: 100%; max-height: 400px; border-radius: 10px; margin: 15px 0; border: 3px solid #4caf50; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"
+                                 id="img-${list.numer_listu}"
+                                 onerror="document.getElementById('btn-${list.numer_listu}').style.display='none';">
+                        ` : `
+                            <div class="photo-placeholder">
+                                Brak zdjęcia
+                            </div>
+                        `}
+                    </div>
+                    
+                    <p><strong>Status:</strong> 
+                        <span class="status-badge status-${list.status}">${list.status}</span>
+                    </p>
+                    <div class="list-actions">
+                        <button onclick="cancelReservation('${list.numer_listu}')" class="btn btn-danger">
+                            Anuluj rezerwację
+                        </button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+// Funkcja filtrowania moich listów
+function filterMyLists() {
+    const selectedLetter = document.getElementById('my-lists-filter').value;
+    const listCards = document.querySelectorAll('#my-lists-grid .list-card');
+    
+    listCards.forEach(card => {
+        const cardLetter = card.getAttribute('data-letter');
+        
+        if (selectedLetter === 'ALL' || cardLetter === selectedLetter) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
 }
 
 // Funkcja do pokazywania/ukrywania zdjęć
@@ -678,9 +813,6 @@ async function cancelReservation(listNumber) {
     }
 }
 
-
-
-
 function showAllLists() {
     loadAllLists();
 }
@@ -702,8 +834,8 @@ function showAddListForm() {
                 <div class="form-group">
                     <label for="list-number"> Numer listu *</label>
                     <input type="text" id="list-number" class="input" required 
-                           placeholder="np. L001, L002, L003...">
-                    <small style="color: #666; font-size: 0.9rem;">Numer musi być unikalny</small>
+                           placeholder="np. A001, B002, M003...">
+                    <small style="color: #666; font-size: 0.9rem;">Numer musi być unikalny. Użyj liter A-M i cyfr</small>
                 </div>
                 
                 <div class="form-group">
@@ -737,7 +869,7 @@ function showAddListForm() {
                 <h4> Wskazówki:</h4>
                 <ul>
                     <li>Pola oznaczone * są wymagane</li>
-                    <li>Numer listu powinien być unikalny w systemie</li>
+                    <li>Numer listu powinien być unikalny w systemie (A001, B002, itd.)</li>
                     <li>Opis powinien być konkretny, aby darczyńca wiedział co kupić</li>
                     <li>Zdjęcie listu pomaga w identyfikacji seniora</li>
                 </ul>
@@ -801,6 +933,13 @@ async function handleAddList(event) {
     // Walidacja
     if (!listData.numer_listu || !listData.imie_wiek || !listData.opis_prezentu) {
         alert(' Proszę wypełnić wszystkie wymagane pola!');
+        return;
+    }
+    
+    // Walidacja formatu numeru listu (litera A-M + cyfry)
+    const listNumberRegex = /^[A-M][0-9]+$/i;
+    if (!listNumberRegex.test(listData.numer_listu)) {
+        alert(' Numer listu musi zaczynać się od litery A-M, a następnie zawierać cyfry (np. A001, B123, M005)');
         return;
     }
     
