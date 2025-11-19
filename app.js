@@ -370,7 +370,7 @@ async function loadUserLists(userId) {
 }
 
 // Wyświetl wszystkie listy (dla admina)
-function displayAllLists(lists) {
+async function displayAllLists(lists) {
     const content = document.getElementById('admin-content');
     const user = JSON.parse(localStorage.getItem('user'));
     
@@ -379,9 +379,30 @@ function displayAllLists(lists) {
         return;
     }
 
-    const total = lists.length;
-    const available = lists.filter(l => l.status === 'dostępny').length;
-    const reserved = lists.filter(l => l.status === 'zarezerwowany').length;
+    // Pobierz wszystkich użytkowników
+    let users = [];
+    try {
+        const response = await fetch('/api/users'); // lub twoje endpoint do pobrania użytkowników
+        users = await response.json();
+    } catch (error) {
+        console.error('Błąd przy pobieraniu użytkowników:', error);
+    }
+
+    // Stwórz mapę ID -> email
+    const userMap = {};
+    users.forEach(user => {
+        userMap[user.id] = user.email;
+    });
+
+    // Dodaj emaile do list
+    const listsWithEmails = lists.map(list => ({
+        ...list,
+        user_email: list.osoba_rezerwujaca ? userMap[list.osoba_rezerwujaca] : null
+    }));
+
+    const total = listsWithEmails.length;
+    const available = listsWithEmails.filter(l => l.status === 'dostępny').length;
+    const reserved = listsWithEmails.filter(l => l.status === 'zarezerwowany').length;
 
     content.innerHTML = `
         <div class="admin-stats">
@@ -400,12 +421,12 @@ function displayAllLists(lists) {
         </div>
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h3>📋 Wszystkie listy (${lists.length})</h3>
-            <button onclick="showMyReservedLists()" class="btn btn-info btn-small">⭐ Moje rezerwacje</button>
+            <h3> Wszystkie listy (${listsWithEmails.length})</h3>
+            <button onclick="showMyReservedLists()" class="btn btn-info btn-small"> Moje rezerwacje</button>
         </div>
         
         <div class="lists-grid">
-            ${lists.map(list => `
+            ${listsWithEmails.map(list => `
                 <div class="list-card ${list.status}">
                     <h4>List ${list.numer_listu}</h4>
                     <p><strong> Senior:</strong> ${list.imie_wiek}</p>
@@ -423,7 +444,7 @@ function displayAllLists(lists) {
                                  onerror="document.getElementById('btn-${list.numer_listu}').style.display='none';">
                         ` : `
                             <div class="photo-placeholder">
-                                📄 Brak zdjęcia
+                                 Brak zdjęcia
                             </div>
                         `}
                     </div>
@@ -432,7 +453,7 @@ function displayAllLists(lists) {
                         <span class="status-badge status-${list.status}">${list.status}</span>
                     </p>
                     
-                    ${list.osoba_rezerwujaca ? `<p><strong>Zarezerwowany przez:</strong> ${list.osoba_rezerwujaca}</p>` : ''}
+                    ${list.osoba_rezerwujaca ? `<p><strong>Zarezerwowany przez:</strong> ${list.user_email || 'Nieznany użytkownik'}</p>` : ''}
                     
                     <div class="list-actions">
                         ${list.status === 'dostępny' ? 
@@ -447,6 +468,7 @@ function displayAllLists(lists) {
         </div>
     `;
 }
+
 
 // Wyświetl dostępne listy (dla użytkownika)
 function displayAvailableLists(lists) {
