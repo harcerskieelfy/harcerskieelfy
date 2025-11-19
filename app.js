@@ -400,7 +400,7 @@ async function loadUserLists(userId) {
 
 // Funkcja pomocnicza do wyodrębniania litery z numeru listu
 function getListLetter(listNumber) {
-    const match = listNumber.match(/^([A-M])/i);
+    const match = listNumber.match(/^([A-Z])/i);
     return match ? match[1].toUpperCase() : 'OTHER';
 }
 
@@ -442,7 +442,7 @@ async function displayAllLists(lists) {
 
     // Wyodrębnij unikalne litery z numerów listów
     const letters = [...new Set(listsWithEmails.map(list => {
-        const match = list.numer_listu.match(/^([A-M])/i);
+        const match = list.numer_listu.match(/^([A-Z])/i);
         return match ? match[1].toUpperCase() : 'ALL';
     }))].sort();
 
@@ -466,7 +466,7 @@ async function displayAllLists(lists) {
             <h3>Wszystkie listy (${listsWithEmails.length})</h3>
             <div style="display: flex; gap: 10px; align-items: center;">
                 <select id="letter-filter" onchange="filterListsByLetter()" class="input" style="width: auto;">
-                    <option value="ALL">Wszystkie domy (A-M)</option>
+                    <option value="ALL">Wszystkie domy (A-Z)</option>
                     ${letters.map(letter => `
                         <option value="${letter}">Dom ${letter}</option>
                     `).join('')}
@@ -623,7 +623,7 @@ function displayMyLists(lists) {
 
     // Wyodrębnij unikalne litery
     const letters = [...new Set(lists.map(list => {
-        const match = list.numer_listu.match(/^([A-M])/i);
+        const match = list.numer_listu.match(/^([A-Z])/i);
         return match ? match[1].toUpperCase() : 'ALL';
     }))].sort();
 
@@ -835,7 +835,7 @@ function showAddListForm() {
                     <label for="list-number"> Numer listu *</label>
                     <input type="text" id="list-number" class="input" required 
                            placeholder="np. A001, B002, M003...">
-                    <small style="color: #666; font-size: 0.9rem;">Numer musi być unikalny. Użyj liter A-M i cyfr</small>
+                    <small style="color: #666; font-size: 0.9rem;">Numer musi być unikalny. Użyj liter A-Z i cyfr</small>
                 </div>
                 
                 <div class="form-group">
@@ -937,7 +937,7 @@ async function handleAddList(event) {
     }
     
     // Walidacja formatu numeru listu (litera A-M + cyfry)
-    const listNumberRegex = /^[A-M][0-9]+$/i;
+    const listNumberRegex = /^[A-Z][0-9]+$/i;
     if (!listNumberRegex.test(listData.numer_listu)) {
         alert(' Numer listu musi zaczynać się od litery A-M, a następnie zawierać cyfry (np. A001, B123, M005)');
         return;
