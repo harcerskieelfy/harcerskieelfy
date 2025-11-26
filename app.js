@@ -322,6 +322,8 @@ function displayAdminReservedLists(lists) {
                             <button onclick="cancelReservation('${list.numer_listu}')" class="btn btn-danger">
                                 Anuluj rezerwację
                             </button>
+                            <button onclick="editList('${list.numer_listu}')" class="btn btn-warning btn-small">Edytuj</button>
+                            <button onclick="deleteList('${list.numer_listu}')" class="btn btn-danger btn-small">Usuń</button>
                         </div>
                     </div>
                 `).join('')}
@@ -400,7 +402,7 @@ async function loadUserLists(userId) {
 
 // Funkcja pomocnicza do wyodrębniania litery z numeru listu
 function getListLetter(listNumber) {
-    const match = listNumber.match(/^([A-Z])/i);
+    const match = listNumber.match(/^([A-M])/i);
     return match ? match[1].toUpperCase() : 'OTHER';
 }
 
@@ -442,7 +444,7 @@ async function displayAllLists(lists) {
 
     // Wyodrębnij unikalne litery z numerów listów
     const letters = [...new Set(listsWithEmails.map(list => {
-        const match = list.numer_listu.match(/^([A-Z])/i);
+        const match = list.numer_listu.match(/^([A-M])/i);
         return match ? match[1].toUpperCase() : 'ALL';
     }))].sort();
 
@@ -466,7 +468,7 @@ async function displayAllLists(lists) {
             <h3>Wszystkie listy (${listsWithEmails.length})</h3>
             <div style="display: flex; gap: 10px; align-items: center;">
                 <select id="letter-filter" onchange="filterListsByLetter()" class="input" style="width: auto;">
-                    <option value="ALL">Wszystkie domy (A-Z)</option>
+                    <option value="ALL">Wszystkie domy (A-M)</option>
                     ${letters.map(letter => `
                         <option value="${letter}">Dom ${letter}</option>
                     `).join('')}
@@ -512,6 +514,8 @@ async function displayAllLists(lists) {
                             `<button onclick="cancelReservation('${list.numer_listu}')" class="btn btn-danger btn-small">Anuluj moją rezerwację</button>` :
                             `<button onclick="cancelReservation('${list.numer_listu}')" class="btn btn-warning btn-small">Zwolnij rezerwację</button>`
                         }
+                        <button onclick="editList('${list.numer_listu}')" class="btn btn-warning btn-small">Edytuj</button>
+                        <button onclick="deleteList('${list.numer_listu}')" class="btn btn-danger btn-small">Usuń</button>
                     </div>
                 </div>
             `).join('')}
@@ -623,7 +627,7 @@ function displayMyLists(lists) {
 
     // Wyodrębnij unikalne litery
     const letters = [...new Set(lists.map(list => {
-        const match = list.numer_listu.match(/^([A-Z])/i);
+        const match = list.numer_listu.match(/^([A-M])/i);
         return match ? match[1].toUpperCase() : 'ALL';
     }))].sort();
 
@@ -813,6 +817,219 @@ async function cancelReservation(listNumber) {
     }
 }
 
+// USUWANIE LISTU
+async function deleteList(listNumber) {
+    if (!confirm(`Czy na pewno chcesz usunąć list ${listNumber}? Tej operacji nie można cofnąć!`)) {
+        return;
+    }
+
+    try {
+        const { error } = await supabase
+            .from('listy')
+            .delete()
+            .eq('numer_listu', listNumber);
+
+        if (error) throw error;
+
+        alert('List został usunięty!');
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user.admin) {
+            await loadAllLists();
+        }
+    } catch (err) {
+        alert('Błąd podczas usuwania listu: ' + err.message);
+    }
+}
+
+// EDYCJA LISTU
+async function editList(listNumber) {
+    try {
+        // Pobierz dane listu
+        const { data: list, error } = await supabase
+            .from('listy')
+            .select('*')
+            .eq('numer_listu', listNumber)
+            .single();
+
+        if (error) throw error;
+
+        showEditListForm(list);
+
+    } catch (err) {
+        alert('Błąd podczas ładowania danych listu: ' + err.message);
+    }
+}
+
+function showEditListForm(list) {
+    const content = document.getElementById('admin-content');
+    content.innerHTML = `
+        <div class="add-list-form fade-in">
+            <div class="form-header">
+                <h3>Edytuj list ${list.numer_listu}</h3>
+                <button onclick="showAllLists()" class="btn btn-secondary">← Wróć do list</button>
+            </div>
+            
+            <form id="edit-list-form" onsubmit="handleEditList(event, '${list.numer_listu}')">
+                <div class="form-group">
+                    <label for="edit-list-number">Numer listu *</label>
+                    <input type="text" id="edit-list-number" class="input" value="${list.numer_listu}" readonly>
+                    <small style="color: #666; font-size: 0.9rem;">Numer listu nie może być zmieniony</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-senior-name">Senior (imię i wiek) *</label>
+                    <input type="text" id="edit-senior-name" class="input" value="${list.imie_wiek}" required 
+                           placeholder="np. Pani Maria, 78 lat">
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-gift-description">Opis prezentu *</label>
+                    <textarea id="edit-gift-description" class="input textarea" required 
+                              placeholder="Opisz czego senior potrzebuje lub o czym marzy..."
+                              rows="4">${list.opis_prezentu || ''}</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-list-status">Status listu</label>
+                    <select id="edit-list-status" class="input">
+                        <option value="dostępny" ${list.status === 'dostępny' ? 'selected' : ''}>Dostępny</option>
+                        <option value="zarezerwowany" ${list.status === 'zarezerwowany' ? 'selected' : ''}>Zarezerwowany</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-list-photo">Zdjęcie listu (opcjonalnie)</label>
+                    <input type="file" id="edit-list-photo" class="input file-input" 
+                           accept="image/*" onchange="previewEditPhoto(event)">
+                    <small style="color: #666; font-size: 0.9rem;">Dozwolone formaty: JPG, PNG, GIF (max 5MB)</small>
+                    <div id="edit-photo-preview-container" style="margin-top: 15px;">
+                        ${list.zdjecie_url ? `
+                            <div style="text-align: center;">
+                                <p style="color: #4caf50; font-weight: 600; margin-bottom: 10px;">Aktualne zdjęcie:</p>
+                                <img src="${list.zdjecie_url}" 
+                                     style="max-width: 300px; max-height: 300px; border-radius: 10px; border: 3px solid #4caf50; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"
+                                     alt="Aktualne zdjęcie listu">
+                                <br>
+                                <button type="button" onclick="removeEditPhoto('${list.numer_listu}')" class="btn btn-danger btn-small" style="margin-top: 10px;">
+                                    Usuń zdjęcie
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" onclick="showAllLists()" class="btn btn-secondary">Anuluj</button>
+                    <button type="submit" class="btn btn-success">Zapisz zmiany</button>
+                </div>
+            </form>
+        </div>
+    `;
+}
+
+// Podgląd zdjęcia w edycji
+function previewEditPhoto(event) {
+    const file = event.target.files[0];
+    const previewContainer = document.getElementById('edit-photo-preview-container');
+    
+    if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Plik jest za duży! Maksymalny rozmiar to 5MB.');
+            event.target.value = '';
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewContainer.innerHTML = `
+                <div style="text-align: center;">
+                    <p style="color: #4caf50; font-weight: 600; margin-bottom: 10px;">Nowe zdjęcie:</p>
+                    <img src="${e.target.result}" 
+                         style="max-width: 300px; max-height: 300px; border-radius: 10px; border: 3px solid #4caf50; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"
+                         alt="Podgląd nowego zdjęcia">
+                </div>
+            `;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// Usuwanie zdjęcia w edycji
+async function removeEditPhoto(listNumber) {
+    if (!confirm('Czy na pewno chcesz usunąć zdjęcie tego listu?')) {
+        return;
+    }
+
+    try {
+        const { error } = await supabase
+            .from('listy')
+            .update({ zdjecie_url: null })
+            .eq('numer_listu', listNumber);
+
+        if (error) throw error;
+
+        alert('Zdjęcie zostało usunięte!');
+        // Przeładuj formularz edycji
+        editList(listNumber);
+    } catch (err) {
+        alert('Błąd podczas usuwania zdjęcia: ' + err.message);
+    }
+}
+
+// Obsługa zapisu edycji listu
+async function handleEditList(event, listNumber) {
+    event.preventDefault();
+    
+    const listData = {
+        imie_wiek: document.getElementById('edit-senior-name').value.trim(),
+        opis_prezentu: document.getElementById('edit-gift-description').value.trim(),
+        status: document.getElementById('edit-list-status').value
+    };
+    
+    // Walidacja
+    if (!listData.imie_wiek || !listData.opis_prezentu) {
+        alert('Proszę wypełnić wszystkie wymagane pola!');
+        return;
+    }
+    
+    try {
+        // Upload nowego zdjęcia jeśli zostało dodane
+        const photoFile = document.getElementById('edit-list-photo').files[0];
+        if (photoFile) {
+            const fileExt = photoFile.name.split('.').pop();
+            const fileName = `${listNumber}_${Date.now()}.${fileExt}`;
+            const filePath = `list-photos/${fileName}`;
+            
+            const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('list-photos')
+                .upload(filePath, photoFile);
+                
+            if (uploadError) throw uploadError;
+            
+            // Pobierz publiczny URL zdjęcia
+            const { data: urlData } = supabase.storage
+                .from('list-photos')
+                .getPublicUrl(filePath);
+                
+            listData.zdjecie_url = urlData.publicUrl;
+        }
+        
+        // Aktualizacja listu w bazie
+        const { data, error } = await supabase
+            .from('listy')
+            .update(listData)
+            .eq('numer_listu', listNumber);
+
+        if (error) throw error;
+
+        alert('List został zaktualizowany!');
+        showAllLists();
+        
+    } catch (err) {
+        alert('Błąd podczas aktualizacji listu: ' + err.message);
+    }
+}
+
 function showAllLists() {
     loadAllLists();
 }
@@ -835,7 +1052,7 @@ function showAddListForm() {
                     <label for="list-number"> Numer listu *</label>
                     <input type="text" id="list-number" class="input" required 
                            placeholder="np. A001, B002, M003...">
-                    <small style="color: #666; font-size: 0.9rem;">Numer musi być unikalny. Użyj liter A-Z i cyfr</small>
+                    <small style="color: #666; font-size: 0.9rem;">Numer musi być unikalny. Użyj liter A-M i cyfr</small>
                 </div>
                 
                 <div class="form-group">
@@ -937,7 +1154,7 @@ async function handleAddList(event) {
     }
     
     // Walidacja formatu numeru listu (litera A-M + cyfry)
-    const listNumberRegex = /^[A-Z][0-9]+$/i;
+    const listNumberRegex = /^[A-M][0-9]+$/i;
     if (!listNumberRegex.test(listData.numer_listu)) {
         alert(' Numer listu musi zaczynać się od litery A-M, a następnie zawierać cyfry (np. A001, B123, M005)');
         return;
