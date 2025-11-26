@@ -322,6 +322,10 @@ function displayAdminReservedLists(lists) {
                             <button onclick="cancelReservation('${list.numer_listu}')" class="btn btn-danger">
                                 Anuluj rezerwację
                             </button>
+                            ${list.status === 'zarezerwowany' ? 
+                                `<button onclick="markAsDelivered('${list.numer_listu}')" class="btn btn-success btn-small">Oznacz jako doręczony</button>` :
+                                ''
+                            }
                             <button onclick="editList('${list.numer_listu}')" class="btn btn-warning btn-small">Edytuj</button>
                             <button onclick="deleteList('${list.numer_listu}')" class="btn btn-danger btn-small">Usuń</button>
                         </div>
@@ -441,6 +445,7 @@ async function displayAllLists(lists) {
     const total = listsWithEmails.length;
     const available = listsWithEmails.filter(l => l.status === 'dostępny').length;
     const reserved = listsWithEmails.filter(l => l.status === 'zarezerwowany').length;
+    const delivered = listsWithEmails.filter(l => l.status === 'doreczony').length;
 
     // Wyodrębnij unikalne litery z numerów listów
     const letters = [...new Set(listsWithEmails.map(list => {
@@ -461,6 +466,10 @@ async function displayAllLists(lists) {
             <div class="stat-card">
                 <span class="stat-number">${reserved}</span>
                 <span class="stat-label">Zarezerwowane</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">${delivered}</span>
+                <span class="stat-label">Doręczone</span>
             </div>
         </div>
         
@@ -510,12 +519,20 @@ async function displayAllLists(lists) {
                     <div class="list-actions">
                         ${list.status === 'dostępny' ? 
                             `<button onclick="reserveAsAdmin('${list.numer_listu}', ${user.id})" class="btn btn-success btn-small">Zarezerwuj dla siebie</button>` :
-                            list.osoba_rezerwujaca === user.id ?
-                            `<button onclick="cancelReservation('${list.numer_listu}')" class="btn btn-danger btn-small">Anuluj moją rezerwację</button>` :
-                            `<button onclick="cancelReservation('${list.numer_listu}')" class="btn btn-warning btn-small">Zwolnij rezerwację</button>`
+                            list.status === 'zarezerwowany' ?
+                            `<button onclick="markAsDelivered('${list.numer_listu}')" class="btn btn-success btn-small">Oznacz jako doręczony</button>` :
+                            ''
                         }
-                        <button onclick="editList('${list.numer_listu}')" class="btn btn-warning btn-small">Edytuj</button>
-                        <button onclick="deleteList('${list.numer_listu}')" class="btn btn-danger btn-small">Usuń</button>
+                        ${list.status !== 'doreczony' ? `
+                            <button onclick="editList('${list.numer_listu}')" class="btn btn-warning btn-small">Edytuj</button>
+                            <button onclick="deleteList('${list.numer_listu}')" class="btn btn-danger btn-small">Usuń</button>
+                        ` : ''}
+                        ${list.status === 'zarezerwowany' && list.osoba_rezerwujaca === user.id ?
+                            `<button onclick="cancelReservation('${list.numer_listu}')" class="btn btn-danger btn-small">Anuluj moją rezerwację</button>` :
+                            list.status === 'zarezerwowany' ?
+                            `<button onclick="cancelReservation('${list.numer_listu}')" class="btn btn-warning btn-small">Zwolnij rezerwację</button>` :
+                            ''
+                        }
                     </div>
                 </div>
             `).join('')}
@@ -817,6 +834,32 @@ async function cancelReservation(listNumber) {
     }
 }
 
+// Oznaczanie listu jako doręczony
+async function markAsDelivered(listNumber) {
+    if (!confirm(`Czy na pewno chcesz oznaczyć list ${listNumber} jako doręczony?`)) {
+        return;
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('listy')
+            .update({
+                status: 'doreczony'
+            })
+            .eq('numer_listu', listNumber);
+
+        if (error) throw error;
+
+        alert('List został oznaczony jako doręczony!');
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user.admin) {
+            await loadAllLists();
+        }
+    } catch (err) {
+        alert('Błąd podczas oznaczania listu jako doręczony: ' + err.message);
+    }
+}
+
 // USUWANIE LISTU
 async function deleteList(listNumber) {
     if (!confirm(`Czy na pewno chcesz usunąć list ${listNumber}? Tej operacji nie można cofnąć!`)) {
@@ -894,6 +937,7 @@ function showEditListForm(list) {
                     <select id="edit-list-status" class="input">
                         <option value="dostępny" ${list.status === 'dostępny' ? 'selected' : ''}>Dostępny</option>
                         <option value="zarezerwowany" ${list.status === 'zarezerwowany' ? 'selected' : ''}>Zarezerwowany</option>
+                        <option value="doreczony" ${list.status === 'doreczony' ? 'selected' : ''}>Doręczony</option>
                     </select>
                 </div>
 
