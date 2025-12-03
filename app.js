@@ -763,7 +763,7 @@ async function reserveList(listNumber, userId) {
         if (error) {
             alert('Błąd rezerwacji: ' + error.message);
         } else if (data && data.length > 0) {
-            alert('List został zarezerwowany! Odśwież stronę');
+            alert('Dziekujemy za rezerwacje listu! Odśwież stronę');
             const user = JSON.parse(localStorage.getItem('user'));
             if (user.admin) {
                 await loadAllLists();
